@@ -65,11 +65,7 @@ if (!isset($_GET['request_num'])) {
               if(isset($_GET['py_req_id']))
               {
                 $pay_req_id = $_GET['py_req_id'];
-<<<<<<< HEAD
                 $all_req = mysqli_query($con, "SELECT pr_num FROM `fin_all_pay_request` WHERE pay_request_id='$pay_req_id'");
-=======
-                $all_req = mysqli_query($con, "SELECT * FROM `fin_all_pay_request` WHERE pay_request_id='$pay_req_id'");
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                 $result_all = mysqli_fetch_object($all_req);
               }
         ?>

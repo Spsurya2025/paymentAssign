@@ -9,10 +9,6 @@ if (!isset($_GET['request_num'])) {
   $request_no = $_GET['request_num'];
   // echo $request_no;
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
 ?>
   
 <!-- End of Scripts -->
@@ -127,11 +123,7 @@ if (!isset($_GET['request_num'])) {
         </select>
       </div>
     </div>
-<<<<<<< HEAD
     <div class="col-lg-3">
-=======
-    <div class="col-lg-4">
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
       <div class="form-group">
         <label for="type">Department</label>
         <?php
@@ -141,21 +133,13 @@ if (!isset($_GET['request_num'])) {
         <input type="text" class="form-control" name="depart" id="depart" value="<?php echo $dept->dept_name;?>" readonly>
       </div>
     </div>
-<<<<<<< HEAD
     <div class="col-lg-3">
-=======
-    <div class="col-lg-4">
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
       <div class="form-group">
         <label for="type">Employee Code</label>
         <input type="text" class="form-control" name="emp_code" id="emp_code" value="<?php echo $fthsp->employ_id;?>" readonly>
       </div>
     </div>
-<<<<<<< HEAD
     <div class="col-lg-3">
-=======
-    <div class="col-lg-4">
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
       <div class="form-group">
         <label for="type">Requested Net Payment</label>
         <input type="text" class="form-control" name="net_pay" id="all_total" value="<?php echo $fthsp->net_pay;?>" readonly>

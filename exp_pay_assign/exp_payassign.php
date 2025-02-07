@@ -11,7 +11,6 @@ if (!isset($_GET['request_num'])) {
 }
 
 ?>
-<<<<<<< HEAD
 <script type="text/javascript">
   function calc() {
     var expns_req_amt = parseFloat($("#expns_req_amt").val()) || 0.0;
@@ -21,9 +20,6 @@ if (!isset($_GET['request_num'])) {
     $("#all_total").val(all_total.toFixed(2));
   }
 </script>
-=======
-  
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
 <!-- End of Scripts -->
 
 <!-- Salary Processing Form -->
@@ -112,17 +108,12 @@ if (!isset($_GET['request_num'])) {
     <div class="col-lg-3">
       <div class="form-group">
         <label for="org_id">Request Amount</label>
-<<<<<<< HEAD
         <input type="text" class="form-control" name="expns_req_amt" id="expns_req_amt" value="<?php echo $fthex->total_amount;?>" readonly>
-=======
-        <input type="text" class="form-control" name="expns_req_amt" value="<?php echo $fthex->total_amount;?>" readonly>
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
         <input type="hidden" name="exp_payreq_id" value="<?php echo $fthex->id;?>">
       </div>
     </div>
     <div class="col-lg-3">
       <div class="form-group">
-<<<<<<< HEAD
         <label for="org_id">Other Charges</label>
         <textarea class="form-control" name="exp_other_charges"></textarea>
       </div>
@@ -135,8 +126,6 @@ if (!isset($_GET['request_num'])) {
     </div>
     <div class="col-lg-3">
       <div class="form-group">
-=======
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
         <label for="org_id">Total Amount</label>
         <input type="text" class="form-control" id="all_total" name="expns_total_amt" value="<?php echo $fthex->total_amount;?>" readonly>
       </div>

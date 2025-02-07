@@ -13,10 +13,6 @@ if (!isset($_GET['request_num'])) {
   $request_no = $_GET['request_num'];
 }
 ?>
-<<<<<<< HEAD
-=======
-  
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
 <!-- End of Scripts -->
 <!-- Supplier Form -->
 <div class="row" style="margin-top: 20px;">
@@ -118,12 +114,6 @@ if (!isset($_GET['request_num'])) {
     </div>
   </div>
   <div class="col-lg-12">
-<<<<<<< HEAD
-=======
-    
-    
-    
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
   </div>
     <div class="col-lg-12" id="prDtls">
       <div class="col-lg-12">
@@ -147,10 +137,6 @@ if (!isset($_GET['request_num'])) {
             </thead>
             <tbody>
              <?php
-<<<<<<< HEAD
-=======
-
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                $prqr = mysqli_query($con, "SELECT * FROM `fin_payment_request_supplier_pr` WHERE `payreq_id`='$fthsplr->payreq_id' AND `splr_req_id`='$fthsplr->spleqid' AND `po_num`='$fthsplr->po_num' ");
                $a = 1;
                $po_num = $fthsplr->po_num;
@@ -163,11 +149,6 @@ if (!isset($_GET['request_num'])) {
                 $singleprocessamt = mysqli_fetch_object($singleinprocessamount);
              ?>
               <!-- <td><?= $row['name']; ?><input type="hidden" name="name[<?= $row['id']; ?>]" value="<?= $row['name']; ?>"></td> -->
-<<<<<<< HEAD
-=======
-
-
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
               <tr>
                 <td>
                  <?php 
@@ -177,19 +158,11 @@ if (!isset($_GET['request_num'])) {
                     <?php }}?>
                 </td>
                 <td>
-<<<<<<< HEAD
                   <select class="form-control" readonly>
                     <option><?php echo $fthprs->sreqnum; ?></option>
                   </select>
                 </td>
                 <td><input type="text" class="form-control" name="pr_numbr[<?=$fthprs->id;?>]" id="pr_numbr" value="<?php echo $fthprs->prnum; ?>" readonly></td>
-=======
-                  <select class="form-control" name="pr_numbr[<?=$fthprs->id;?>]" id="pr_numbr" readonly>
-                    <option><?php echo $fthprs->sreqnum; ?></option>
-                  </select>
-                </td>
-                <td><input type="text" class="form-control" value="<?php echo $fthprs->prnum; ?>" readonly></td>
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                 <td>
                   <input type="text" class="form-control" name="subprj_nm[<?=$fthprs->id;?>]" id="subprj_nm" value="<?php echo $fthprs->subprj ? $fthprs->subprj : "Not Available";; ?>" placeholder="Sub Project Name" readonly>
                 </td>

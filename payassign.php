@@ -20,28 +20,16 @@ if(isset($_POST['payasgn']))
    $created_on = date('Y-m-d H:i:s');
    $sql = "SELECT * FROM fin_payment_entry WHERE preqnum = '$preqnum'";
    $result = $con->query($sql);
-<<<<<<< HEAD
    if (strtoupper($trnsc_type) == 'DEBIT' && $result->num_rows > 0) 
    {       
       echo "<script>alert('Payment request number: $preqnum already exists!');</script>";
       echo "<script>window.history.go(-1);</script>";
    }
-=======
-   if ($result->num_rows > 0) 
-   {       
-      echo "<script>alert('Payment request number: $preqnum already exists!');</script>";
-      echo "<script>window.history.go(-1);</script>";
-   } 
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
    else 
    {
       $insqry = mysqli_query($con, "INSERT INTO `fin_payment_entry` (`bnkimprt_id`, `statement_id`, `bankacc_id`, `preqnum`, `trnsc_type`, `payment_mode`, `orgnsn_name`, `trnscto`, `payee_nm`, `pay_assgn_stat`, `pay_approval_stat`, `status`, `frst_apprv`, `frst_apprv_date`) VALUES ('$bnkimprt_id', '$statement_id', '$bankacc_id', '$preqnum', '$trnsc_type', 'offline', '$orgnsn_name', '$trnscto', '$payee_nm', '1', '1', '1','$empid','$created_on')");   
       $pentry_last_id = mysqli_insert_id($con);  
-<<<<<<< HEAD
       $pay_request_id = isset($_POST['pay_rqst_id']) ? mysqli_real_escape_string($con, $_POST['pay_rqst_id']) : 0;
-=======
-      $pay_request_id = mysqli_real_escape_string($con, $_POST['pay_rqst_id']);
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
       if($insqry)
       {
          $updpeqr = mysqli_query($con,"UPDATE fin_banking_imports SET pr_num='$preqnum',is_pay_asgnd='1',is_pay_aprvd='1' WHERE id='$bnkimprt_id'");
@@ -87,11 +75,7 @@ if(isset($_POST['payasgn']))
                }
 
             }
-<<<<<<< HEAD
             else if(!empty($_POST['tr_data']))
-=======
-            if(!empty($_POST['tr_data']))
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
             {
                foreach($_POST['tr_data'] as $id)
                {
@@ -102,18 +86,13 @@ if(isset($_POST['payasgn']))
                   $trnsrsn = mysqli_real_escape_string($con, $_POST['trnsrsn'][$id]);
                   $trns_rqst_amt = mysqli_real_escape_string($con, $_POST['trreqamt'][$id]);
                   $trns_paid_amnt = $paid_amnt;
-<<<<<<< HEAD
                   $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '0', '$pr_paid_amnt', '$trnsrsn', '$trns_rqst_amt', '$trns_paid_amnt', '1')");
-=======
-                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`) VALUES ('$pentry_last_id', '0', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '0', '$pr_paid_amnt', '$trnsrsn', '$trns_rqst_amt', '$trns_paid_amnt', '1')");
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                   if($splrqr)
                   {
                      echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
                   } 
                }
             }
-<<<<<<< HEAD
             else
             { 
                 $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`) VALUES ('$pentry_last_id', '0', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '', '', '0', '0', '', '', '', '1')");
@@ -122,8 +101,6 @@ if(isset($_POST['payasgn']))
                     echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
                 } 
             }
-=======
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
          } 
          else if ($trnscto == "Operator")
          {
@@ -192,13 +169,9 @@ if(isset($_POST['payasgn']))
             $prjct = mysqli_real_escape_string($con, $_POST['prjct']);
             $sub_prjct = mysqli_real_escape_string($con, $_POST['sub_prjct']);
             $bmsnm = mysqli_real_escape_string($con, $_POST['bmsnm']);
-<<<<<<< HEAD
             $expns_req_amt = mysqli_real_escape_string($con, $_POST['expns_req_amt']);
             $expns_other_charges = mysqli_real_escape_string($con, $_POST['exp_other_charges']);
             $expns_other_amt = mysqli_real_escape_string($con, $_POST['exp_other_amt']);
-=======
-            $expns_req_amt = mysqli_real_escape_string($con, $_POST['bmsnm']);
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
             $expenen = mysqli_query($con, "INSERT INTO `fin_payment_entry_expense` (`payent_id`, `pay_rqst_id`, `expns_for`, `exp_for_empcode`, `prjct`, `sub_prjct`, `bmsnm`, `exp_req_amt`, `paid_exp_amt`, `status`) VALUES ('$pentry_last_id', '$expns_req_id', '$expns_for', '$exp_for_empcode', '$prjct', '$sub_prjct', '$bmsnm', '$expns_req_amt', '$paid_amnt', '1')");
             if($expenen)
             {
@@ -277,11 +250,7 @@ if(isset($_POST['payasgn']))
                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
                   <div class="form-group">
                      <label for="preqnum">Payment Request No.</label>
-<<<<<<< HEAD
                      <select class="form-control" name="preqnum" id="request_num" <?php echo (strtoupper($fthimps->transac_type) == 'CREDIT')? 'disabled' : ''?>>
-=======
-                     <select class="form-control" name="preqnum" id="request_num">
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                         <option value="">---Select payment Request no.---</option>
                      </select>
                   </div>
@@ -328,26 +297,13 @@ if(isset($_POST['payasgn']))
                      <label for="trnscto">Transaction To/Type</label>
                      <select class="form-control" name="trnscto" id="trnscto">
                      <?php
-<<<<<<< HEAD
                            if (strtoupper($fthimps->transac_type) == 'DEBIT') {?>
                              <option value="">--- Select Transaction To/Type ---</option>
-=======
-                           if (isset($_GET['bimpid']) && isset($_GET['peid'])) {
-                              echo "<option value='".$row->trnscto."'>".$row->trnscto."</option>";
-                           }
-                           else { 
-                           ?>
-                        <option value="">--- Select Transaction To/Type ---</option>
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                         <option value="Supplier">Supplier</option>
                         <option value="Vendor">Vendor</option>
                         <option value="Transporter">Transporter</option>
                         <option value="GST">GST</option>
                         <option value="Withdraw">Withdraw</option>
-<<<<<<< HEAD
-=======
-                        <!-- <option value="EMI">EMI</option> -->
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                         <option value="Collection">Collection</option>
                         <option value="Expense">Expense</option>
                         <option value="Rent">Rent</option>
@@ -363,7 +319,6 @@ if(isset($_POST['payasgn']))
                         <option value="Bank Transfer">Bank Transfer</option>
                         <option value="Operator">Operator Payment</option>
                         <option value="Others">Others</option>
-<<<<<<< HEAD
                            <?php } 
                            else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
                            <option value="">--- Select Transaction To/Type ---</option>
@@ -374,9 +329,6 @@ if(isset($_POST['payasgn']))
                         <?php } else { ?>
                            <option value="">--- Select Transaction To/Type ---</option>
                            <?php } ?>
-=======
-                        <?php } ?>
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                      </select>
                   </div>
                </div>
@@ -425,12 +377,6 @@ if(isset($_POST['payasgn']))
             const transaction_to = $(this).val();
             const organisation_id = $("#pay_orgnstn").val();
             const trnsctn_typ = $("#trnsc_type").val();
-<<<<<<< HEAD
-=======
-            var pay_bnkacc = $("#pay_bnkacc").val();
-            var pay_orgnstn = $("#pay_orgnstn").val();
-            var paidamt = $("#paidamt").val();
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
             const $select = $("#request_num")[0].selectize;
             $select.clear();
             $select.clearOptions();
@@ -438,7 +384,6 @@ if(isset($_POST['payasgn']))
             $("#showPay").html('');
             $("#payment_req_id").val('');
             // Define API endpoint mappings based on transaction type
-<<<<<<< HEAD
             if(trnsctn_typ.toUpperCase() == 'DEBIT')
             {
                const apiEndpoints = {
@@ -497,38 +442,12 @@ if(isset($_POST['payasgn']))
                     success: function (response) {
                         var resp = $.trim(response);
                         $("#showPay").html(resp);
-=======
-            const apiEndpoints = {
-            "Supplier": "supplier_pay_assign/get_spl.php",
-            "Vendor": "Vendor_pay_assign/get_ven.php",
-            "Operator": "Vendor_pay_assign/get_ven.php",
-            "Transporter": "transporter_pay_assign/get_tr.php",
-            "Salary Processing": "salary_pay_assign/get_sal.php",
-            "Expense": "exp_pay_assign/get_exp.php"
-            };
-            // Check if transaction_to exists in mapping
-            if (!apiEndpoints[transaction_to]) {
-            return;
-            }
-            // Fetch data dynamically
-                $.ajax({
-                    url: apiEndpoints[transaction_to],
-                    data: { trans_to: transaction_to, organisation_id: organisation_id },
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function (response) {
-                        handleResponse(response, $select, transaction_to);
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
                     },
                     error: function () {
                         alert('Failed to fetch data');
                     }
                 });
-<<<<<<< HEAD
             }         
-=======
-            
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
         });
         function handleResponse(response, selectizeInstance, transaction_to) {
             response.forEach(function (item) {
@@ -601,15 +520,11 @@ if(isset($_POST['payasgn']))
    var request_num = document.getElementById('request_num').value.trim();
    var paidamt = parseFloat(document.getElementById('paidamt').value) || 0;
    var pay_orgnstn = document.getElementById('pay_orgnstn').value.trim();
-<<<<<<< HEAD
    var trnsctn_typ = document.getElementById('trnsc_type').value;
-=======
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
    if (!trnscto) {
       alert('Please select transaction type');
       return false;
    }
-<<<<<<< HEAD
    if(trnsctn_typ.toUpperCase()=='DEBIT')
     {
         if (!request_num) {
@@ -789,89 +704,6 @@ if(isset($_POST['payasgn']))
         return false;
     }
 
-=======
-
-   if (!request_num) {
-      alert("Please select request number");
-      return false;
-   }
-
-   // Mapping transaction types to their respective total amount field IDs
-   var amountFields = {
-      "Supplier": "all_total",
-      "Vendor": "all_total",
-      "Operator": "all_total",
-      "Transporter": "all_total",
-      "Salary Processing": "all_total",
-      "Expense": "all_total"
-   };
-   var errorMessages = {
-      "Supplier": "Total request amount should match the paid amount",
-      "Vendor": "Total request amount should match the paid amount",
-      "Operator": "Total amount should match the paid amount",
-      "Transporter": "Requested amount should match the paid amount",
-      "Salary Processing": "Net payment should match the paid amount",
-      "Expense": "Total payment should match the paid amount"
-   };
-   var organ_fields = {
-      "Supplier": "s_organization",
-      "Vendor": "v_organization",
-      "Operator": "o_organization",
-      "Transporter": "t_organization",
-      "Salary Processing": "sal_organization",
-      "Expense": "e_organization"
-   };
-   if (organ_fields[trnscto]) {
-      var orgaField = document.getElementById(organ_fields[trnscto]);
-
-      if (!orgaField || isNaN(orgaField.value)) {
-         alert("Organisation name is missing or invalid");
-         return false;
-      }
-
-      var orgaName = orgaField.value || 0;
-
-      if (orgaName !== pay_orgnstn) {
-         alert("Organisation name should be matched");
-         orgaField.style.border = '1px solid red';
-         return false;
-      } else {
-         orgaField.style.border = ''; // Reset border if valid
-      }
-   }
-   if (amountFields[trnscto]) {
-      var totalAmountField = document.getElementById(amountFields[trnscto]);
-
-      if (!totalAmountField || isNaN(parseFloat(totalAmountField.value))) {
-         alert("Total amount field is missing or invalid");
-         return false;
-      }
-
-      var totalAmount = parseFloat(totalAmountField.value) || 0;
-
-      if (totalAmount !== paidamt) {
-         alert(errorMessages[trnscto]);
-         totalAmountField.style.border = '1px solid red';
-         return false;
-      } else {
-         totalAmountField.style.border = ''; // Reset border if valid
-      }
-   }
-   
-   // Additional validation for Salary Processing
-   if (trnscto === "Salary Processing") {
-      var sp_remark = document.getElementById("sp_remarks");
-      if (!sp_remark || sp_remark.value.trim() === '') {
-         alert("Provide Remark");
-         sp_remark.style.border = '1px solid red';
-         return false;
-      } else {
-         sp_remark.style.border = ''; // Reset border if valid
-      }
-   }
-
-   return true;
->>>>>>> fdbc078bc0e8b84217b6e0d420e5066f8b72ac51
   }
 
 </script>
