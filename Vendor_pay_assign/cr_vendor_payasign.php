@@ -1,7 +1,3 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
-
 <?php include("../../../config.php"); ?>
   <!-- Get project Details As Per Vendor Selection -->
   <script type="text/javascript">
@@ -92,6 +88,13 @@
     $(document).ready(function(){
       $("#jobodr_num").change(function(){
         showSbPrj();
+      });
+    });
+  </script>
+  <script>
+   $(document).ready(function () {
+      $('#vndrnm').selectize({
+      sortField: 'text'
       });
     });
   </script>

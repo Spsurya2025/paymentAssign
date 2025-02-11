@@ -9,6 +9,7 @@ if(isset($_POST['payasgn']))
 {    
    $msg = '';
    $bnkimprt_id = $_GET['bimpid'];
+   $acc_id = $_GET['accid'];
    $preqnum = mysqli_real_escape_string($con, $_POST['preqnum']);
    $statement_id = mysqli_real_escape_string($con, $_POST['stmnt_prvw']);
    $bankacc_id = mysqli_real_escape_string($con, $_POST['bankacc_id']);
@@ -67,7 +68,7 @@ if(isset($_POST['payasgn']))
                   $pr_request_amt = mysqli_real_escape_string($con, $_POST['pr_reqamt'][$id]);
                   $trnsrsn = '';
                   $pr_paid_amnt = $paid_amnt;
-                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '$pr_request_amt', '$pr_paid_amnt', '$trnsrsn', '0', '$trns_paid_amnt', '1')"); 
+                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '$pr_request_amt', '$pr_paid_amnt', '$trnsrsn', '0', '$trns_paid_amnt', '1','$pr_request_amt','$pr_paid_amnt')"); 
                   if($splrqr)
                   {
                      echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
@@ -86,7 +87,7 @@ if(isset($_POST['payasgn']))
                   $trnsrsn = mysqli_real_escape_string($con, $_POST['trnsrsn'][$id]);
                   $trns_rqst_amt = mysqli_real_escape_string($con, $_POST['trreqamt'][$id]);
                   $trns_paid_amnt = $paid_amnt;
-                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '0', '$pr_paid_amnt', '$trnsrsn', '$trns_rqst_amt', '$trns_paid_amnt', '1')");
+                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '0', '$pr_paid_amnt', '$trnsrsn', '$trns_rqst_amt', '$trns_paid_amnt', '1','$trns_rqst_amt','$trns_paid_amnt')");
                   if($splrqr)
                   {
                      echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
@@ -95,7 +96,7 @@ if(isset($_POST['payasgn']))
             }
             else
             { 
-                $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`) VALUES ('$pentry_last_id', '0', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '', '', '0', '0', '', '', '', '1')");
+                $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '0', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '', '', '0', '0', '', '', '', '1','$paid_amnt','$paid_amnt')");
                 if($splrqr)
                 {
                     echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
@@ -164,6 +165,7 @@ if(isset($_POST['payasgn']))
          else if ($trnscto == "Expense") 
          { 
             $expns_req_id = mysqli_real_escape_string($con, $_POST['exp_payreq_id']);
+            $expns_req_num = $preqnum;
             $expns_for = mysqli_real_escape_string($con, $_POST['expns_for']);
             $exp_for_empcode = mysqli_real_escape_string($con, $_POST['exp_for_empcode']);
             $prjct = mysqli_real_escape_string($con, $_POST['prjct']);
@@ -172,13 +174,14 @@ if(isset($_POST['payasgn']))
             $expns_req_amt = mysqli_real_escape_string($con, $_POST['expns_req_amt']);
             $expns_other_charges = mysqli_real_escape_string($con, $_POST['exp_other_charges']);
             $expns_other_amt = mysqli_real_escape_string($con, $_POST['exp_other_amt']);
-            $expenen = mysqli_query($con, "INSERT INTO `fin_payment_entry_expense` (`payent_id`, `pay_rqst_id`, `expns_for`, `exp_for_empcode`, `prjct`, `sub_prjct`, `bmsnm`, `exp_req_amt`, `paid_exp_amt`, `status`) VALUES ('$pentry_last_id', '$expns_req_id', '$expns_for', '$exp_for_empcode', '$prjct', '$sub_prjct', '$bmsnm', '$expns_req_amt', '$paid_amnt', '1')");
+            $expns_total_amt = mysqli_real_escape_string($con, $_POST['expns_total_amt']);
+            $expenen = mysqli_query($con, "INSERT INTO `fin_payment_entry_expense` (`payent_id`, `pay_rqst_id`, `expns_for`, `exp_for_empcode`, `prjct`, `sub_prjct`, `bmsnm`, `expreqno`, `exp_req_amt`, `paid_exp_amt`,`other_charge`,`other_charge_amnt`,`total_amnt`,`status`) VALUES ('$pentry_last_id', '$expns_req_id', '$expns_for', '$exp_for_empcode', '$prjct', '$sub_prjct', '$bmsnm','$expns_req_num','$expns_req_amt', '$paid_amnt','$expns_other_charges','$expns_other_amt','$expns_total_amt', '1')");
             if($expenen)
             {
                echo "<script>alert('Expense payment assign details successfully inserted')</script>";
             }
          }
-        echo "<script>window.history.go(-2);</script>"; 
+        echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
       } 
       else 
       {
@@ -194,6 +197,13 @@ if(isset($_POST['payasgn']))
    .form-control.selectize-control {
       height: 28px !important;
    }
+   .selectize-dropdown {
+   min-width: 250px; /* Adjust based on your layout */
+}
+   .selectize-dropdown {
+   max-width: 100% !important; /* Ensures the dropdown does not exceed container */
+   word-wrap: break-word; /* Wraps long text inside the dropdown */
+}
 </style>
 <script>
    $(document).ready(function () {
@@ -302,30 +312,18 @@ if(isset($_POST['payasgn']))
                         <option value="Supplier">Supplier</option>
                         <option value="Vendor">Vendor</option>
                         <option value="Transporter">Transporter</option>
-                        <option value="GST">GST</option>
-                        <option value="Withdraw">Withdraw</option>
-                        <option value="Collection">Collection</option>
                         <option value="Expense">Expense</option>
-                        <option value="Rent">Rent</option>
-                        <option value="DD">DD</option>
-                        <option value="FD">FD</option>
-                        <option value="Cheque">Cheque</option>
-                        <option value="Salary Advance">Salary Advance</option>
-                        <option value="Loan Advance">Employee Loan Advance</option>
-                        <option value="Loan Assignment">Loan Assignment</option>
-                        <option value="Asset Finance">Asset Finance</option>
-                        <option value="LC Processing">LC Processing</option>
                         <option value="Salary Processing">Salary Processing</option>
-                        <option value="Bank Transfer">Bank Transfer</option>
                         <option value="Operator">Operator Payment</option>
-                        <option value="Others">Others</option>
                            <?php } 
                            else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
                            <option value="">--- Select Transaction To/Type ---</option>
                            <option value="Supplier">Supplier</option>
                            <option value="Vendor">Vendor</option>
-                           <!-- <option value="Transporter">Transporter</option> -->
+                           <option value="Transporter">Transporter</option>
                            <option value="Expense">Expense</option>
+                           <option value="Salary Processing">Salary Processing</option>
+                           <option value="Operator">Operator Payment</option>
                         <?php } else { ?>
                            <option value="">--- Select Transaction To/Type ---</option>
                            <?php } ?>
@@ -342,6 +340,18 @@ if(isset($_POST['payasgn']))
                </div>
                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
                   <div class="form-group">
+                     <label for="bank_trans_date">Transaction date</label>
+                     <input type="text" class="form-control" name="bank_trans_date" id="bank_trans_date" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->transac_dt; } ?>" readonly>
+                  </div>
+               </div>
+               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                  <div class="form-group">
+                     <label for="bank_ref">Reference</label>
+                     <input type="text" class="form-control" name="bank_ref" id="bank_ref" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->reference; } ?>" readonly>
+                  </div>
+               </div>
+               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                  <div class="form-group">
                      <label for="paidamt">Paid/Approved Amount</label>
                      <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
@@ -349,18 +359,26 @@ if(isset($_POST['payasgn']))
                      </div>
                   </div>
                </div>
-            </div>
-            <div id="showPay">
-            </div>
-            <div class="row">
-               <div class="col-lg-12">
+               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
                   <div class="form-group">
-                     <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
-                        <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" >
-                     </div>
+                     <label for="bank_desc">Description</label>
+                     <textarea name="" class="form-control" name="bank_desc" id="bank_desc" readonly><?php if (isset($_GET['bimpid'])) { echo $fthimps->dscrptn; } ?></textarea>
                   </div>
                </div>
             </div>
+            <div id="showPay">
+            </div>
+            <?php if($fthimps->is_pay_aprvd == '0') { ?>
+               <div class="row">
+                  <div class="col-lg-12">
+                     <div class="form-group">
+                        <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
+                           <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" >
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            <?php } ?>
          </fieldset>
       </form>
       <!-- //Body Ends Here -->     
@@ -389,7 +407,7 @@ if(isset($_POST['payasgn']))
                const apiEndpoints = {
                "Supplier": "supplier_pay_assign/get_spl.php",
                "Vendor": "Vendor_pay_assign/get_ven.php",
-               "Operator": "Vendor_pay_assign/get_ven.php",
+               "Operator": "operator_pay_assign/get_opr.php",
                "Transporter": "transporter_pay_assign/get_tr.php",
                "Salary Processing": "salary_pay_assign/get_sal.php",
                "Expense": "exp_pay_assign/get_exp.php"
@@ -423,13 +441,17 @@ if(isset($_POST['payasgn']))
                  "Supplier": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/supplier_pay_assign/cr_supplier_payasn.php",
                  "Vendor": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/Vendor_pay_assign/cr_vendor_payasign.php",
                  "Transporter": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/transporter_pay_assign/cr_transport_pay_assign.php",
-                 "Expense": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/exp_pay_assign/cr_exp_payassign.php"
+                 "Expense": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/exp_pay_assign/cr_exp_payassign.php",
+                 "Salary Processing": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/salary_pay_assign/cr_salary_payassign.php",
+                 "Operator": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/cr_operator_payasgn.php"
                };
                const c_data = {
                  "Supplier": {bimpid:<?php echo $_GET['bimpid'];?>,trnsctyp:trnsctn_typ},
                  "Vendor": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Transporter": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Expense": {bimpid:<?php echo $_GET['bimpid'];?>}
+                 "Expense": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "Salary Processing": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "Operator": {bimpid:<?php echo $_GET['bimpid'];?>}
                };
                if (!c_apiEndpoints[transaction_to]) {
                   alert("Transaction to/type not available or not implemented");
@@ -631,7 +653,7 @@ if(isset($_POST['payasgn']))
       else if(trnscto === "Transporter")
       {
          const tr_fields = [
-            { id:'trnsprtrnm', name: 'Transporter'},
+            { id:'trnsprtrnm', name: 'Transporter name'},
             { id: 'prjctnm', name: 'Project name'},
             { id: 'subprjnm', name: 'Sub project name'},
             { id: 'bmsnm', name: 'Billing milestone'},
@@ -692,6 +714,48 @@ if(isset($_POST['payasgn']))
             let ex_value = document.getElementById(ex_field.id).value.trim();
             if (!ex_value) {
                alert(`${ex_field.name} field is required!`);
+               return false;
+            }
+         }
+         return true;
+      }
+      else if(trnscto === "Operator")
+      {
+         const op_fields = [
+            { id:'op_id', name: 'Operator Name'},
+            { id: 'rate', name: 'Rate'},
+            { id: 'month', name: 'Month'},
+            { id: 'accnum', name: 'Account Number'},
+            { id: 'total_amt', name: 'Total Amount'}
+         ];
+         for (let op_field of op_fields) {
+            let op_value = document.getElementById(op_field.id).value.trim();
+            if (!op_value) {
+               alert(`${op_field.name} field is required!`);
+               return false;
+            }
+         }
+         // Compare total amount with paid amount
+         let total_amt = parseFloat(document.getElementById('total_amt').value) || 0;
+         if (total_amt !== paidamt) {
+            alert("Total Amount and Paid Amount must be the same!");
+            return false;
+         }
+         return true;
+      }
+      else if(trnscto === "Salary Processing")
+      {
+         const sp_fields = [
+            { id:'benif_acc', name: 'Benificiary A/c'},
+            { id: 'location', name: 'Location name'},
+            { id: 'year', name: 'Year'},
+            { id: 'month', name: 'Month'},
+            { id: 'sp_remarks', name: 'Remark'}
+         ];
+         for (let sp_field of sp_fields) {
+            let sp_value = document.getElementById(sp_field.id).value.trim();
+            if (!sp_value) {
+               alert(`${sp_field.name} field is required!`);
                return false;
             }
          }

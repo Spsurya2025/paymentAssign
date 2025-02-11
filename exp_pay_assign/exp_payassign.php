@@ -11,6 +11,16 @@ if (!isset($_GET['request_num'])) {
 }
 
 ?>
+<!-- <script>
+  $(document).ready(function(){
+    $(".numeric").on("input", function() {
+        this.value = this.value.replace(/[^0-9.]/g, ''); // Allow numbers and decimal point
+        if ((this.value.match(/\./g) || []).length > 1) {
+            this.value = this.value.slice(0, -1); // Prevent multiple decimal points
+        }
+    });
+  });
+</script>
 <script type="text/javascript">
   function calc() {
     var expns_req_amt = parseFloat($("#expns_req_amt").val()) || 0.0;
@@ -19,7 +29,7 @@ if (!isset($_GET['request_num'])) {
     var all_total = parseFloat(expns_req_amt) + parseFloat(other_amt);
     $("#all_total").val(all_total.toFixed(2));
   }
-</script>
+</script> -->
 <!-- End of Scripts -->
 
 <!-- Salary Processing Form -->
@@ -112,6 +122,7 @@ if (!isset($_GET['request_num'])) {
         <input type="hidden" name="exp_payreq_id" value="<?php echo $fthex->id;?>">
       </div>
     </div>
+    <!-- <?php if (!isset($_GET['peid'])) { ?>
     <div class="col-lg-3">
       <div class="form-group">
         <label for="org_id">Other Charges</label>
@@ -121,9 +132,10 @@ if (!isset($_GET['request_num'])) {
     <div class="col-lg-3">
       <div class="form-group">
         <label for="org_id">Other Amount</label>
-        <input type="number" class="form-control" name="exp_other_amt" id="other_amt" onkeyup="calc()">
+        <input type="text" class="form-control numeric" name="exp_other_amt" id="other_amt" onkeyup="calc();">
       </div>
     </div>
+    <?php } ?> -->
     <div class="col-lg-3">
       <div class="form-group">
         <label for="org_id">Total Amount</label>

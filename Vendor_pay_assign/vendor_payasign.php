@@ -301,9 +301,6 @@ if (!isset($_GET['request_num'])) {
                 <th>Project</th>
                 <th>JO Value</th>
                 <th>Invoice Value</th>
-                <th>Paid Amount</th>
-                <th>Already In Process</th>
-                <th>Balance</th>
                 <th>Request Amounts</th>
               </tr>
             </thead>
@@ -322,24 +319,6 @@ if (!isset($_GET['request_num'])) {
                       <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
                         <input type="text" class="form-control" value="<?php echo $Job_InvoiceValue; ?>" readonly>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="input-group">
-                       <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                       <input type="text" class="form-control" value="<?php echo  $OverallJobOrder_wise_paid;?>" readonly>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="input-group">
-                       <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                       <input type="text" class="form-control" value="<?php echo  $OverallJobOrder_wise_pending;?>" readonly>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="input-group">
-                        <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                        <input type="text" class="form-control" value="<?php echo $OverAllBalance_Jo; ?>" readonly>
                       </div>
                     </td>
                     <td>
@@ -366,9 +345,6 @@ if (!isset($_GET['request_num'])) {
                     <th>BMS</th>
                     <th>Work Desc (Alias)</th>
                     <th>Value</th>
-                    <th>Paid</th>
-                    <th>In Process</th>
-                    <th>Balance</th>
                     <th>Request Amount</th>
                 </tr>
             </thead>
@@ -397,24 +373,6 @@ if (!isset($_GET['request_num'])) {
                      <div class="input-group">
                        <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
                        <input type="text" name="subprjct_val" class="form-control" value="<?php echo $fthvndrs->subprj_val;?>" readonly>
-                      </div>
-                    </td>
-                    <td>
-                     <div class="input-group">
-                       <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                       <input type="text" name="paid_v" class="form-control" value="<?php echo $paidvalue;?>" readonly>
-                      </div>
-                    </td>
-                    <td>
-                     <div class="input-group">
-                       <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                       <input type="text" name="proamt_v" class="form-control" value="<?php echo $processamnt;?>" readonly>
-                      </div>
-                    </td>
-                    <td>
-                      <div class="input-group">
-                       <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                       <input type="text" name="balamt_v" class="form-control" value="<?php echo $balance; ?>" readonly>
                       </div>
                     </td>
                     <td>

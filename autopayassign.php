@@ -6,6 +6,7 @@ require_once '../../new_header.php' ?>
 $empid = $_SESSION['ERP_SESS_ID'];
 $peid = $_GET['peid'];
 $bnkimprt_id = $_GET['bimpid'];
+$acc_id = $_GET['accid'];
 $message = '';
 if(isset($_POST['payasgn']))
 { 
@@ -16,7 +17,7 @@ if(isset($_POST['payasgn']))
    {
       $updbankim = mysqli_query($con,"UPDATE fin_banking_imports SET is_pay_asgnd='1',is_pay_aprvd='1' WHERE id='$bnkimprt_id'");
       echo "<script>alert('Successfully updated')</script>";
-      echo "<script>window.history.go(-2);</script>";
+      echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
    }
    else
    {
@@ -32,7 +33,7 @@ elseif(isset($_POST['payrej']))
    {
       $updbankim = mysqli_query($con,"UPDATE fin_banking_imports SET is_pay_aprvd='3' WHERE id='$bnkimprt_id'");
       echo "<script>alert('Successfully updated')</script>";
-      echo "<script>window.history.go(-2);</script>";
+      echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
    }
    else
    {
@@ -143,7 +144,18 @@ elseif(isset($_POST['payrej']))
                      <input type="text" class="form-control" name="payee_nm" id="payee_nm" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->payee_name; } ?>" readonly>
                   </div>
                </div>
-
+               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                  <div class="form-group">
+                     <label for="bank_trans_date">Transaction date</label>
+                     <input type="text" class="form-control" name="bank_trans_date" id="bank_trans_date" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->transac_dt; } ?>" readonly>
+                  </div>
+               </div>
+               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                  <div class="form-group">
+                     <label for="bank_ref">Reference</label>
+                     <input type="text" class="form-control" name="bank_ref" id="bank_ref" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->reference; } ?>" readonly>
+                  </div>
+               </div>
                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
                   <div class="form-group">
                      <label for="paidamt">Paid/Approved Amount</label>
@@ -153,18 +165,28 @@ elseif(isset($_POST['payrej']))
                      </div>
                   </div>
                </div>
+               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+                  <div class="form-group">
+                     <label for="bank_desc">Description</label>
+                     <textarea name="" class="form-control" name="bank_desc" id="bank_desc" readonly><?php if (isset($_GET['bimpid'])) { echo $fthimps->dscrptn; } ?></textarea>
+                  </div>
+               </div>
                <input type="hidden" class="form-control" name="payee_nm" id="request_num" value="<?php if (isset($_GET['bimpid'])) { echo $row1->pr_num; } ?>" readonly>
             </div>
             <div id="showPay">
             </div>
+
             <div class="row">
                <div class="col-lg-12">
                   <div class="form-group">
+                   <?php if($fthimps->is_pay_aprvd == '0') { ?>
+                     <?php if($row->trnscto == 'Supplier' || $row->trnscto == 'Vendor' || $row->trnscto == 'Transporter' || $row->trnscto == 'Operator' || $row->trnscto == 'Salary Processing' || $row->trnscto == 'Expense') { ?>
                      <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
                         <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" onclick="return confirm('Are you sure you want to assign?')">
                         <input type="submit" name="payrej" id="payrej" value="Reject" class="btn btn-danger mr-2" onclick="return confirm('Are you sure you want to reject?')">
                      </div>
-                     <!-- <input type="submit" name="<?php // if(isset($_GET['bimpid'])) { echo 'uppayasgn'; } else if(isset($_GET['bimpid'])) { echo 'payasgn'; } ?>" id="payasgn" value="<?php // if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "UPDATE"; } else if(isset($_GET['bimpid'])) { echo "ASSIGN" ;} ?>" class="btn btn-success mr-2" style="margin-top: 15px; margin-bottom: 30px; float: right;"> -->
+                     <?php } ?>
+                    <?php } ?>
                   </div>
                </div>
             </div>
