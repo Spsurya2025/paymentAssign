@@ -5,9 +5,10 @@ if(isset($_GET['pay_orgnstn'])){
  ?>
 <script>
     $(document).ready(function () {
-      $('#benif_acc').selectize({
-        sortField: 'text'
-      });
+      $('#benif_acc').select2();
+      $('#location').select2();
+      $('#year').select2();
+      $('#month').select2();
     });
 </script>
 <script type="text/javascript">
@@ -58,7 +59,7 @@ if(isset($_GET['pay_orgnstn'])){
     <div class="col-lg-3">
       <div class="form-group">
         <label for="org_id">Location</label>
-        <select class="form-control splpr" name="location" id="location">
+        <select class="form-control" name="location" id="location">
           <option value="">---Select---</option>
           <?php
             $loc = "SELECT * FROM `hr_location` order by `lname` ASC";

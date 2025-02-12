@@ -181,6 +181,19 @@ if(isset($_POST['payasgn']))
                echo "<script>alert('Expense payment assign details successfully inserted')</script>";
             }
          }
+         else if ($trnscto == "Others") 
+         { 
+            $othrhead = mysqli_real_escape_string($con, $_POST['othrhead']);
+            $prjnm = mysqli_real_escape_string($con, $_POST['prjnm']);
+            $subprjnm = mysqli_real_escape_string($con, $_POST['subprjnm']);
+            $paytcr = mysqli_real_escape_string($con, $_POST['paytcr']);
+            $requested_amt = mysqli_real_escape_string($con, $_POST['requested_amt']);
+            $otheren = mysqli_query($con, "INSERT INTO `fin_payment_entry_others` (`payent_id`, `pay_rqst_id`, `othrhd`, `prj_name`, `sprj_name`, `particlr`, `othr_req_amt`, `paid_othr_amt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$othrhead', '$prjnm', '$subprjnm', '$paytcr', '$requested_amt','$paid_amnt','1')");
+            if($otheren)
+            {
+               echo "<script>alert('Others payment assign details successfully inserted')</script>";
+            }
+         }
         echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
       } 
       else 
@@ -190,20 +203,14 @@ if(isset($_POST['payasgn']))
    }
 }    
 ?>
-<title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Update Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Add Payment Assignment"; } ?> : Suryam Group</title>
+<title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Auto Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Manual Payment Assignment"; } ?> : Suryam Group</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
 <style>
    .form-control.selectize-control {
       height: 28px !important;
    }
-   .selectize-dropdown {
-   min-width: 250px; /* Adjust based on your layout */
-}
-   .selectize-dropdown {
-   max-width: 100% !important; /* Ensures the dropdown does not exceed container */
-   word-wrap: break-word; /* Wraps long text inside the dropdown */
-}
+
 </style>
 <script>
    $(document).ready(function () {
@@ -315,6 +322,7 @@ if(isset($_POST['payasgn']))
                         <option value="Expense">Expense</option>
                         <option value="Salary Processing">Salary Processing</option>
                         <option value="Operator">Operator Payment</option>
+                        <option value="Others">Others</option>
                            <?php } 
                            else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
                            <option value="">--- Select Transaction To/Type ---</option>
@@ -324,6 +332,7 @@ if(isset($_POST['payasgn']))
                            <option value="Expense">Expense</option>
                            <option value="Salary Processing">Salary Processing</option>
                            <option value="Operator">Operator Payment</option>
+                           <option value="Others">Others</option>
                         <?php } else { ?>
                            <option value="">--- Select Transaction To/Type ---</option>
                            <?php } ?>
@@ -410,7 +419,8 @@ if(isset($_POST['payasgn']))
                "Operator": "operator_pay_assign/get_opr.php",
                "Transporter": "transporter_pay_assign/get_tr.php",
                "Salary Processing": "salary_pay_assign/get_sal.php",
-               "Expense": "exp_pay_assign/get_exp.php"
+               "Expense": "exp_pay_assign/get_exp.php",
+               "Others": "other_pay_assign/get_oth.php",
                };
 
                // Check if transaction_to exists in mapping
@@ -443,7 +453,8 @@ if(isset($_POST['payasgn']))
                  "Transporter": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/transporter_pay_assign/cr_transport_pay_assign.php",
                  "Expense": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/exp_pay_assign/cr_exp_payassign.php",
                  "Salary Processing": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/salary_pay_assign/cr_salary_payassign.php",
-                 "Operator": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/cr_operator_payasgn.php"
+                 "Operator": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/cr_operator_payasgn.php",
+                 "Others": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/other_pay_assign/cr_others_payasn.php"
                };
                const c_data = {
                  "Supplier": {bimpid:<?php echo $_GET['bimpid'];?>,trnsctyp:trnsctn_typ},
@@ -451,7 +462,8 @@ if(isset($_POST['payasgn']))
                  "Transporter": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Expense": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Salary Processing": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Operator": {bimpid:<?php echo $_GET['bimpid'];?>}
+                 "Operator": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "Others": {bimpid:<?php echo $_GET['bimpid'];?>}
                };
                if (!c_apiEndpoints[transaction_to]) {
                   alert("Transaction to/type not available or not implemented");
@@ -475,7 +487,7 @@ if(isset($_POST['payasgn']))
             response.forEach(function (item) {
             let prNums = [];
 
-            if (transaction_to === "Salary Processing" || transaction_to === "Expense") {
+            if (transaction_to === "Salary Processing" || transaction_to === "Expense" || transaction_to === "Others") {
                 prNums = [item.pr_num]; // Single value case
             } else {
                 prNums = item.pr_num.split('#'); // Multiple values case
@@ -510,7 +522,8 @@ if(isset($_POST['payasgn']))
             "Operator": "operator_pay_assign/operator_payasgn.php",
             "Transporter": "transporter_pay_assign/transport_pay_assign.php",
             "Salary Processing": "salary_pay_assign/salary_payassign.php",
-            "Expense": "exp_pay_assign/exp_payassign.php"
+            "Expense": "exp_pay_assign/exp_payassign.php",
+            "Others": "other_pay_assign/others_payasn.php",
           };
 
           // Check if transaction type exists in mapping
@@ -561,7 +574,8 @@ if(isset($_POST['payasgn']))
             "Operator": "all_total",
             "Transporter": "all_total",
             "Salary Processing": "all_total",
-            "Expense": "all_total"
+            "Expense": "all_total",
+            "Others": "requested_amt"
         };
         var errorMessages = {
             "Supplier": "Total request amount should match the paid amount",
@@ -569,7 +583,8 @@ if(isset($_POST['payasgn']))
             "Operator": "Total amount should match the paid amount",
             "Transporter": "Requested amount should match the paid amount",
             "Salary Processing": "Net payment should match the paid amount",
-            "Expense": "Total payment should match the paid amount"
+            "Expense": "Total payment should match the paid amount",
+            "Others": "Requested amount must match the paid amount"
         };
         var organ_fields = {
             "Supplier": "s_organization",
@@ -577,7 +592,8 @@ if(isset($_POST['payasgn']))
             "Operator": "o_organization",
             "Transporter": "t_organization",
             "Salary Processing": "sal_organization",
-            "Expense": "e_organization"
+            "Expense": "e_organization",
+            "Others": "ot_organization"
         };
         if (organ_fields[trnscto]) {
             var orgaField = document.getElementById(organ_fields[trnscto]);
@@ -707,8 +723,7 @@ if(isset($_POST['payasgn']))
             { id:'expns_for', name: 'Expense for'},
             { id: 'exp_for_empcode', name: 'Employee Code'},
             { id: 'prjct', name: 'Project name'},
-            { id: 'sub_prjct', name: 'Sub project name'},
-            { id: 'bmsnm', name: 'Billing Milestone'}
+            { id: 'sub_prjct', name: 'Sub project name'}
          ];
          for (let ex_field of ex_fields) {
             let ex_value = document.getElementById(ex_field.id).value.trim();
@@ -756,6 +771,23 @@ if(isset($_POST['payasgn']))
             let sp_value = document.getElementById(sp_field.id).value.trim();
             if (!sp_value) {
                alert(`${sp_field.name} field is required!`);
+               return false;
+            }
+         }
+         return true;
+      }
+      else if(trnscto === "Others")
+      {
+         const oth_fields = [
+            { id:'othrhead', name: 'Head'},
+            { id: 'ptcrt', name: 'Payment to be Credit to'},
+            { id: 'prjctnm', name: 'Project Name'},
+            { id: 'sbprjctnm', name: 'Sub Project Name'}
+         ];
+         for (let oth_field of oth_fields) {
+            let oth_value = document.getElementById(oth_field.id).value.trim();
+            if (!oth_value) {
+               alert(`${oth_field.name} field is required!`);
                return false;
             }
          }

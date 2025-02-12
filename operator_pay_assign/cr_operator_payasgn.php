@@ -2,7 +2,11 @@
 
   
 <!-- End of Scripts -->
-
+<script>
+    $(document).ready(function () {
+      $('#op_id').select2();
+    });
+</script>
 <!-- Oerator Form -->
 <div class="row" style="margin-top: 20px;">
   <center><h4 style="text-decoration: underline; font-weight: bold; color: #37909e;">Operator Payment Details</h4></center>

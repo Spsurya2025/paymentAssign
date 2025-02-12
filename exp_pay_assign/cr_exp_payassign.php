@@ -1,13 +1,15 @@
 <?php include("../../../config.php"); ?>
 
 <!-- Start of Scripts -->
-  <script>
+<script>
     $(document).ready(function () {
-      $('#expns_for').selectize({
-        sortField: 'text'
-      });
+      $('#expns_for').select2();
+      $('#prjct').select2(); 
+      $('#sub_prjct').select2();
+      $('#bmsnm').select2();
+      
     });
-  </script>
+</script>
   <!-- Get Employee Code As Per Employee Selection -->
   <script type="text/javascript">
     $(document).ready(function(){

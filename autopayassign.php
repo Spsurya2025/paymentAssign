@@ -41,7 +41,7 @@ elseif(isset($_POST['payrej']))
    }
 }
 ?>
-<title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Update Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Add Payment Assignment"; } ?> : Suryam Group</title>
+<title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Auto Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Manual payment Assignment"; } ?> : Suryam Group</title>
 <div id="page-wrapper" style="margin-left: 0;">
    <div class="row" style="margin-top: -35px;">
       <div class="col-lg-12">
@@ -282,6 +282,21 @@ elseif(isset($_POST['payrej']))
       $.ajax({
          url: "exp_pay_assign/exp_payassign.php",
          data:{
+            request_num:request_num,
+            peid:peid
+         },
+         type: 'GET',
+         success: function(response) {
+            var resp = $.trim(response);
+            $("#showPay").html(resp); 
+         }
+      });  
+      }
+      if((trnsto == "Others")){
+      $.ajax({
+         url: "other_pay_assign/others_payasn.php",
+         data:{
+            py_req_id: pay_req_id,
             request_num:request_num,
             peid:peid
          },

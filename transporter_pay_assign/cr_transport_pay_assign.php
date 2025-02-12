@@ -60,12 +60,11 @@
   <!-- End of Calculations -->
   <script>
    $(document).ready(function () {
-      $('#trnsprtrnm').selectize({
-      sortField: 'text'
-      });
-      $('#prjctnm').selectize({
-      sortField: 'text'
-      });
+      $('#trnsprtrnm').select2();
+      $('#prjctnm').select2();
+      $('#bmsnm').select2(); 
+      $('#subprjnm').select2(); 
+      $('#ponum').select2();
     });
   </script>
 <!-- End of Scripts -->
