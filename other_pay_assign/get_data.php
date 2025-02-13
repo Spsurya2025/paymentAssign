@@ -35,12 +35,19 @@ if($_POST['type']=='head')
 {
   if(isset($_POST['prjid'])) {
    $prjid = $_POST['prjid'];
-   $spqr = mysqli_query($con, "SELECT id,spname FROM `prj_subproject` WHERE `id`='$prjid'");
-   while($sprjnm = mysqli_fetch_object($spqr))
+   $spqr = mysqli_query($con, "SELECT id,spname FROM `prj_subproject` WHERE `pid`='$prjid'");
+   if(mysqli_num_rows($spqr) > 0) 
    {
-    echo "<option value='".$sprjnm->id."'>".$sprjnm->spname."</option>";
+      echo "<option value=''>--- Select Sub Project ---</option>";
+      while($sprjnm = mysqli_fetch_object($spqr))
+      {
+      echo "<option value='".$sprjnm->id."'>".$sprjnm->spname."</option>";
+      }
    }
-   
+   else 
+   {
+    echo "<option value=''>No Sub Project Found</option>";
+   }
   }
 }
  ?>

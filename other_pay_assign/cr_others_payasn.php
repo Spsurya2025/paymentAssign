@@ -38,6 +38,7 @@
       $('#othrhead').select2();
       $('#ptcrt').select2();
       $('#prjctnm').select2();
+      $('#sbprjctnm').select2();
     });
 </script>
 <!-- Other Payment Details Form -->
