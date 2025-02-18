@@ -164,7 +164,8 @@ if (!isset($_GET['request_num'])) {
                 </td>
                 <td><input type="text" class="form-control" name="pr_numbr[<?=$fthprs->id;?>]" id="pr_numbr" value="<?php echo $fthprs->prnum; ?>" readonly></td>
                 <td>
-                  <input type="text" class="form-control" name="subprj_nm[<?=$fthprs->id;?>]" id="subprj_nm" value="<?php echo $fthprs->subprj ? $fthprs->subprj : "Not Available";; ?>" placeholder="Sub Project Name" readonly>
+                  <input type="text" class="form-control" name="subprj_nm[<?=$fthprs->id;?>]" id="subprj_nm" value="<?php echo $fthprs->subprj ? $fthprs->subprj : "Not Available";?>" placeholder="Sub Project Name" readonly>
+                  <input type="hidden" class="form-control" name="subprj_id[<?=$fthprs->id;?>]" id="subprj_id" value="<?php echo $fthprs->subprjid ? $fthprs->subprjid : "Not Available"; ?>">
                 </td>
                 <td>
                   <input type="text" class="form-control" name="bms_name[<?=$fthprs->id;?>]" id="bms_name" value="<?php echo $fthprs->bmsnm ? $fthprs->bmsnm : "Not Available"; ?>" placeholder="BMS Name" readonly>

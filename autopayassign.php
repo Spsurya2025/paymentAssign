@@ -180,7 +180,7 @@ elseif(isset($_POST['payrej']))
                <div class="col-lg-12">
                   <div class="form-group">
                    <?php if($fthimps->is_pay_aprvd == '0') { ?>
-                     <?php if($row->trnscto == 'Supplier' || $row->trnscto == 'Vendor' || $row->trnscto == 'Transporter' || $row->trnscto == 'Operator' || $row->trnscto == 'Salary Processing' || $row->trnscto == 'Expense') { ?>
+                     <?php if($row->trnscto == 'Supplier' || $row->trnscto == 'Vendor' || $row->trnscto == 'Others' || $row->trnscto == 'Rent' || $row->trnscto == 'Transporter' || $row->trnscto == 'Operator' || $row->trnscto == 'Salary Processing' || $row->trnscto == 'Expense') { ?>
                      <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
                         <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" onclick="return confirm('Are you sure you want to assign?')">
                         <input type="submit" name="payrej" id="payrej" value="Reject" class="btn btn-danger mr-2" onclick="return confirm('Are you sure you want to reject?')">
@@ -295,6 +295,21 @@ elseif(isset($_POST['payrej']))
       if((trnsto == "Others")){
       $.ajax({
          url: "other_pay_assign/others_payasn.php",
+         data:{
+            py_req_id: pay_req_id,
+            request_num:request_num,
+            peid:peid
+         },
+         type: 'GET',
+         success: function(response) {
+            var resp = $.trim(response);
+            $("#showPay").html(resp); 
+         }
+      });  
+      }
+      if((trnsto == "Rent")){
+      $.ajax({
+         url: "rent_pay_assign/rent_payassign.php",
          data:{
             py_req_id: pay_req_id,
             request_num:request_num,

@@ -108,7 +108,7 @@
   }
 </script>
  <script>
-$("#op_id").change(function () {
+ $("#op_id").change(function () {
     const selectedValue = $(this).val();
     $.ajax({
         url: "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/get_optr_details.php",
@@ -131,5 +131,5 @@ $("#op_id").change(function () {
             alert("Failed to fetch data");
         }
     });
-});
+  });
  </script>

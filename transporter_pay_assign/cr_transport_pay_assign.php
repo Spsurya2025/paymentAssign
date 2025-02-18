@@ -100,8 +100,6 @@
         </select>
       </div>
     </div>
-  <!-- </div>
-  <div class="col-lg-12"> -->
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
         <label for="subprjnm">Sub Project Name</label>
@@ -110,14 +108,14 @@
         </select>
       </div>
     </div>
-    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+    <!-- <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
         <label for="bmsnm">Billing Milestone</label>
         <select class="form-control" name="bmsnm" id="bmsnm">
           <option value="">--- Select BMS ---</option>
         </select>
       </div>
-    </div>
+    </div> -->
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
         <label for="ponum">PO Number</label>

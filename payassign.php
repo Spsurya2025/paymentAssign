@@ -19,22 +19,23 @@ if(isset($_POST['payasgn']))
    $payee_nm = mysqli_real_escape_string($con, $_POST['payee_nm']);
    $paid_amnt = mysqli_real_escape_string($con, $_POST['paidamt']);
    $created_on = date('Y-m-d H:i:s');
-   mysqli_begin_transaction($con);
-   try 
+   $sql = "SELECT * FROM fin_payment_entry WHERE preqnum = '$preqnum'";
+   $result = $con->query($sql);
+   if (strtoupper($trnsc_type) == 'DEBIT' && $result->num_rows > 0) 
+   {       
+      echo "<script>alert('Payment request number: $preqnum already exists!');</script>";
+      echo "<script>window.history.go(-1);</script>";
+   }
+   else 
    {
-        $sql = "SELECT * FROM fin_payment_entry WHERE preqnum = '$preqnum'";
-        $result = $con->query($sql);
-        if (strtoupper($trnsc_type) == 'DEBIT' && $result->num_rows > 0) {
-            throw new Exception("Payment request number: $preqnum already exists!");
-        }
-        $insqry = mysqli_query($con, "INSERT INTO `fin_payment_entry` (`bnkimprt_id`, `statement_id`, `bankacc_id`, `preqnum`, `trnsc_type`, `payment_mode`, `orgnsn_name`, `trnscto`, `payee_nm`, `pay_assgn_stat`, `pay_approval_stat`, `status`, `frst_apprv`, `frst_apprv_date`) VALUES ('$bnkimprt_id', '$statement_id', '$bankacc_id', '$preqnum', '$trnsc_type', 'offline', '$orgnsn_name', '$trnscto', '$payee_nm', '1', '1', '1','$empid','$created_on')");  
-        if (!$insqry) {
-            throw new Exception("Failed to insert into fin_payment_entry.");
-        } 
-        $pentry_last_id = mysqli_insert_id($con);  
-        $pay_request_id = isset($_POST['pay_rqst_id']) ? mysqli_real_escape_string($con, $_POST['pay_rqst_id']) : 0;
-        if($trnscto == "Vendor")
-        {
+      $insqry = mysqli_query($con, "INSERT INTO `fin_payment_entry` (`bnkimprt_id`, `statement_id`, `bankacc_id`, `preqnum`, `trnsc_type`, `payment_mode`, `orgnsn_name`, `trnscto`, `payee_nm`, `pay_assgn_stat`, `pay_approval_stat`, `status`, `frst_apprv`, `frst_apprv_date`) VALUES ('$bnkimprt_id', '$statement_id', '$bankacc_id', '$preqnum', '$trnsc_type', 'offline', '$orgnsn_name', '$trnscto', '$payee_nm', '1', '1', '1','$empid','$created_on')");   
+      $pentry_last_id = mysqli_insert_id($con);  
+      $pay_request_id = isset($_POST['pay_rqst_id']) ? mysqli_real_escape_string($con, $_POST['pay_rqst_id']) : 0;
+      if($insqry)
+      {
+         $updpeqr = mysqli_query($con,"UPDATE fin_banking_imports SET pr_num='$preqnum',is_pay_asgnd='1',is_pay_aprvd='1' WHERE id='$bnkimprt_id'");
+         if($trnscto == "Vendor")
+         {
             $vndrnm = mysqli_real_escape_string($con, $_POST['vndrnm']);
             $prjct_name = mysqli_real_escape_string($con, $_POST['prjct_name']);
             $jobodr_num = mysqli_real_escape_string($con, $_POST['jobodr_num']);
@@ -45,13 +46,13 @@ if(isset($_POST['payasgn']))
             $subprjct_val = mysqli_real_escape_string($con, $_POST['subprjct_val']);
             $req_amt = mysqli_real_escape_string($con, $_POST['req_amt_v']);
             $vndrinqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_vendor` (`payent_id`, `pay_rqst_id`, `vndrnm`, `prjct_name`, `jobodr_num`, `jobodr_val`, `subprjct_nm`, `bmsnm`, `wrk_dscrptn`, `subprjct_val`, `rqst_amt`, `paid_amnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$vndrnm', '$prjct_name', '$jobodr_num', '$jobodr_val', '$subprjct_nm', '$bmsnm', '$wrk_dscrptn', '$subprjct_val', '$req_amt', '$paid_amnt', '1')");
-            if(!$vndrinqr)
+            if($vndrinqr)
             {
-                throw new Exception("Failed to insert data into vendor table");
+               echo "<script>alert('Vendor payment assign details successfully inserted')</script>";
             }
-        }
-        else if ($trnscto == "Supplier") 
-        {
+         }
+         else if ($trnscto == "Supplier") 
+         {
             $suplrnm = mysqli_real_escape_string($con, $_POST['suplrnm']);
             $prj_name = mysqli_real_escape_string($con, $_POST['prj_name']);
             $ponum = mysqli_real_escape_string($con, $_POST['ponum']);
@@ -59,51 +60,53 @@ if(isset($_POST['payasgn']))
             $poamnt = mysqli_real_escape_string($con, $_POST['poamnt']);
             $spreq_typ = mysqli_real_escape_string($con, $_POST['spreq_typ']);
             if (!empty($_POST['pr_data'])) {
-            foreach ($_POST['pr_data'] as $id) {
-                $pr_numbr = mysqli_real_escape_string($con, $_POST['pr_numbr'][$id]);
-                $subprj_nm = mysqli_real_escape_string($con, $_POST['subprj_nm'][$id]);
-                $bms_name = mysqli_real_escape_string($con, $_POST['bms_name'][$id]);
-                $pramnt = mysqli_real_escape_string($con, $_POST['pramnt'][$id]);
-                $pr_request_amt = mysqli_real_escape_string($con, $_POST['pr_reqamt'][$id]);
-                $trnsrsn = '';
-                $pr_paid_amnt = $paid_amnt;
-                $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '$pr_request_amt', '$pr_paid_amnt', '$trnsrsn', '0', '$trns_paid_amnt', '1','$pr_request_amt','$pr_paid_amnt')"); 
-                if(!$splrqr)
-                {
-                    throw new Exception("Failed to insert data into supplier table");
-                }  
-            }
+               foreach ($_POST['pr_data'] as $id) {
+                  $pr_numbr = mysqli_real_escape_string($con, $_POST['pr_numbr'][$id]);
+                  $subprj_nm = mysqli_real_escape_string($con, $_POST['subprj_nm'][$id]);
+                  $subpr_id = mysqli_real_escape_string($con, $_POST['subprj_id'][$id]);
+                  $bms_name = mysqli_real_escape_string($con, $_POST['bms_name'][$id]);
+                  $pramnt = mysqli_real_escape_string($con, $_POST['pramnt'][$id]);
+                  $pr_request_amt = mysqli_real_escape_string($con, $_POST['pr_reqamt'][$id]);
+                  $trnsrsn = '';
+                  $pr_paid_amnt = $paid_amnt;
+                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`,`subprjid`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm','$subpr_id','$bms_name', '$pramnt', '$pr_request_amt', '$pr_paid_amnt', '$trnsrsn', '0', '$trns_paid_amnt', '1','$pr_request_amt','$pr_paid_amnt')"); 
+                  if($splrqr)
+                  {
+                     echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
+                  }  
+               }
 
             }
             else if(!empty($_POST['tr_data']))
             {
-            foreach($_POST['tr_data'] as $id)
-            {
-                $pr_numbr = '';
-                $subprj_nm = '';
-                $bms_name = '';
-                $pramnt = '';
-                $trnsrsn = mysqli_real_escape_string($con, $_POST['trnsrsn'][$id]);
-                $trns_rqst_amt = mysqli_real_escape_string($con, $_POST['trreqamt'][$id]);
-                $trns_paid_amnt = $paid_amnt;
-                $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$bms_name', '$pramnt', '0', '$pr_paid_amnt', '$trnsrsn', '$trns_rqst_amt', '$trns_paid_amnt', '1','$trns_rqst_amt','$trns_paid_amnt')");
-                if(!$splrqr)
-                {
-                    throw new Exception("Failed to insert data into supplier table");
-                } 
-            }
+               foreach($_POST['tr_data'] as $id)
+               {
+                  $pr_numbr = '';
+                  $subprj_nm = '';
+                  $subpr_id = '';
+                  $bms_name = '';
+                  $pramnt = '';
+                  $trnsrsn = mysqli_real_escape_string($con, $_POST['trnsrsn'][$id]);
+                  $trns_rqst_amt = mysqli_real_escape_string($con, $_POST['trreqamt'][$id]);
+                  $trns_paid_amnt = $paid_amnt;
+                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`,`subprjid`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$subpr_id','$bms_name', '$pramnt', '0', '$pr_paid_amnt', '$trnsrsn', '$trns_rqst_amt', '$trns_paid_amnt', '1','$trns_rqst_amt','$trns_paid_amnt')");
+                  if($splrqr)
+                  {
+                     echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
+                  } 
+               }
             }
             else
             { 
-                $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '0', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '', '', '0', '0', '', '', '', '1','$paid_amnt','$paid_amnt')");
-                if(!$splrqr)
+                $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `subprjid`,`bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '0', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '','', '', '0', '0', '', '', '', '1','$paid_amnt','$paid_amnt')");
+                if($splrqr)
                 {
-                    throw new Exception("Failed to insert data into supplier table");
+                    echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
                 } 
             }
-        } 
-        else if ($trnscto == "Operator")
-        {
+         } 
+         else if ($trnscto == "Operator")
+         {
             $op_py_req_amt = mysqli_real_escape_string($con, $_POST['op_req_amt']);
             $op_py_req_num = mysqli_real_escape_string($con, $_POST['req_num']);
             $op_id = mysqli_real_escape_string($con, $_POST['op_id']);
@@ -111,13 +114,13 @@ if(isset($_POST['payasgn']))
             $op_mnth = mysqli_real_escape_string($con, $_POST['op_mnth']);
             $op_rate = mysqli_real_escape_string($con, $_POST['op_rate']);
             $oprinqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_operator` (`fin_pay_entry_id`, `pay_request_id`, `pay_req_num`, `operatorid`, `optraccno`, `rqsted_month`, `optr_rate`, `request_amt`, `amountpaid`, `entrydate`,`aprovalstate`) VALUES ('$pentry_last_id', '$pay_request_id', '$op_py_req_num', '$op_id', '$op_accno', '$op_mnth', '$op_rate', '$op_py_req_amt', '$paid_amnt', '$created_on', '0')");
-            if(!$oprinqr)
+            if($oprinqr)
             {
-                throw new Exception("Failed to insert data into operator table");
+               echo "<script>alert('Operator payment assign details successfully inserted')</script>";
             } 
-        }
-        else if ($trnscto == "Transporter") 
-        {
+         }
+         else if ($trnscto == "Transporter") 
+         {
             $trnsprtrnm = mysqli_real_escape_string($con, $_POST['trnsprtrnm']);
             $prjctnm = mysqli_real_escape_string($con, $_POST['prjctnm']);
             $subprjnm = mysqli_real_escape_string($con, $_POST['subprjnm']);
@@ -140,13 +143,13 @@ if(isset($_POST['payasgn']))
             $final_amnt = mysqli_real_escape_string($con, $_POST['final_amnt']);
             $trnsp_req_amt = mysqli_real_escape_string($con, $_POST['trnsp_req_amt']);
             $trnsptqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_transporter` (`payent_id`, `pay_rqst_id`, `trnsprtrnm`, `prjctnm`, `subprjnm`, `bmsnm`, `ponum`, `place_from`, `place_to`, `distance`, `material_nm`, `mtrl_weight`, `service_typ`, `lry_model`, `dala_typ`, `carrycap`, `totalamnt`, `rateper_km`, `rateper_kg`, `adv_prcnt`, `adv_amt`, `final_amnt`, `trns_req_amt`, `paidamnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$trnsprtrnm', '$prjctnm', '$subprjnm', '$bmsnm', '$ponum', '$place_from', '$place_to', '$distance', '$material_nm', '$mtrl_weight', '$service_typ', '$lry_model', '$dala_typ', '$carrycap', '$totalamnt', '$rateper_km', '$rateper_kg', '$adv_prcnt', '$adv_amt', '$final_amnt', '$trnsp_req_amt', '$paid_amnt', '1')");
-            if(!$trnsptqr)
+            if($trnsptqr)
             {
-                throw new Exception("Failed to insert data into transporter table");
+               echo "<script>alert('Transporter payment assign details successfully inserted')</script>";
             }
-        }
-        else if ($trnscto == "Salary Processing") 
-        { 
+         }
+         else if ($trnscto == "Salary Processing") 
+         { 
             $benif_acc = mysqli_real_escape_string($con, $_POST['benif_acc']);
             $location = mysqli_real_escape_string($con, $_POST['location']);
             $month = mysqli_real_escape_string($con, $_POST['month']);
@@ -156,13 +159,13 @@ if(isset($_POST['payasgn']))
             $sp_remarks = mysqli_real_escape_string($con, $_POST['sp_remarks']);
             $monthyr = $year.'-'.$month;
             $empsqaf = mysqli_query($con, "INSERT INTO `fin_payment_entry_sal_pro` (`payent_id`, `sp_req_id`, `benif_acc`, `orgname`, `location`, `month`, `sp_amount`,`sp_remarks`, `status`) VALUES ('$pentry_last_id', '$req_id', '$benif_acc', '$orgname', '$location', '$monthyr','$paid_amnt', '$sp_remarks', '1')");
-            if(!$empsqaf)
+            if($empsqaf)
             {
-                throw new Exception("Failed to insert data into salary processing table");
+               echo "<script>alert('Salary Processing payment assign details successfully inserted')</script>";
             }
-        }
-        else if ($trnscto == "Expense") 
-        { 
+         }
+         else if ($trnscto == "Expense") 
+         { 
             $expns_req_id = mysqli_real_escape_string($con, $_POST['exp_payreq_id']);
             $expns_req_num = $preqnum;
             $expns_for = mysqli_real_escape_string($con, $_POST['expns_for']);
@@ -175,34 +178,96 @@ if(isset($_POST['payasgn']))
             $expns_other_amt = mysqli_real_escape_string($con, $_POST['exp_other_amt']);
             $expns_total_amt = mysqli_real_escape_string($con, $_POST['expns_total_amt']);
             $expenen = mysqli_query($con, "INSERT INTO `fin_payment_entry_expense` (`payent_id`, `pay_rqst_id`, `expns_for`, `exp_for_empcode`, `prjct`, `sub_prjct`, `bmsnm`, `expreqno`, `exp_req_amt`, `paid_exp_amt`,`other_charge`,`other_charge_amnt`,`total_amnt`,`status`) VALUES ('$pentry_last_id', '$expns_req_id', '$expns_for', '$exp_for_empcode', '$prjct', '$sub_prjct', '$bmsnm','$expns_req_num','$expns_req_amt', '$paid_amnt','$expns_other_charges','$expns_other_amt','$expns_total_amt', '1')");
-            if(!$expenen)
+            if($expenen)
             {
-                throw new Exception("Failed to insert data into expense table");
+               echo "<script>alert('Expense payment assign details successfully inserted')</script>";
             }
-        }
-        else if ($trnscto == "Others") 
-        { 
+         }
+         else if ($trnscto == "Others") 
+         { 
             $othrhead = mysqli_real_escape_string($con, $_POST['othrhead']);
             $prjnm = mysqli_real_escape_string($con, $_POST['prjnm']);
             $subprjnm = mysqli_real_escape_string($con, $_POST['subprjnm']);
             $paytcr = mysqli_real_escape_string($con, $_POST['paytcr']);
             $requested_amt = mysqli_real_escape_string($con, $_POST['requested_amt']);
             $otheren = mysqli_query($con, "INSERT INTO `fin_payment_entry_others` (`payent_id`, `pay_rqst_id`, `othrhd`, `prj_name`, `sprj_name`, `particlr`, `othr_req_amt`, `paid_othr_amt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$othrhead', '$prjnm', '$subprjnm', '$paytcr', '$requested_amt','$paid_amnt','1')");
-            if(!$otheren)
+            if($otheren)
             {
-                throw new Exception("Failed to insert data into others table");
+               echo "<script>alert('Others payment assign details successfully inserted')</script>";
             }
-        } 
-        $updpeqr = mysqli_query($con,"UPDATE fin_banking_imports SET pr_num='$preqnum',is_pay_asgnd='1',is_pay_aprvd='1' WHERE id='$bnkimprt_id'");
-        if (!$updpeqr) {
-            throw new Exception("Failed to update fin_banking_imports.");
-        }       
-        mysqli_commit($con);
-        echo "<script>alert('Payment assigned successfully'); window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
-    } catch (Exception $e) {
-        mysqli_rollback($con);
-        echo "<script>alert('Failed: " . $e->getMessage() . "'); window.history.go(-1);</script>";
-    }
+         }
+         else if ($trnscto == "Rent") { // If Transaction Type is 'Rent'
+            $rent_yr = mysqli_real_escape_string($con, $_POST['year']);
+            $preqnum_r = mysqli_real_escape_string($con, $_POST['preqnum']);
+            $rnt_month = mysqli_real_escape_string($con, $_POST['month']);
+            $rent_typ = mysqli_real_escape_string($con, $_POST['type']);
+            $purpose = mysqli_real_escape_string($con, $_POST['purpose']);
+            if(!empty($_POST['selected_row']))
+            {
+               $selected_index = mysqli_real_escape_string($con, $_POST['selected_row']);
+               // Escape input values
+               $prjct = mysqli_real_escape_string($con, $_POST['p_id'][$selected_index]);
+               $sub_prj = mysqli_real_escape_string($con, $_POST['sp_id'][$selected_index]);
+               $rnt_code = mysqli_real_escape_string($con, $_POST['rnt_code'][$selected_index]);
+               $rnt_pymnt_dt = mysqli_real_escape_string($con, $_POST['rnt_pymnt_dt'][$selected_index]);
+               $client = mysqli_real_escape_string($con, $_POST['client'][$selected_index]);
+               $rate = mysqli_real_escape_string($con, $_POST['rate'][$selected_index]);
+               $rnt_dt = $created_on = date('Y-m-d H:i:s');
+            }
+            else
+            {
+               $prjct = mysqli_real_escape_string($con, $_POST['p_id']);
+               $sub_prj = mysqli_real_escape_string($con, $_POST['sp_id']);
+               $rnt_code = mysqli_real_escape_string($con, $_POST['rnt_code']);
+               $rnt_pymnt_dt = mysqli_real_escape_string($con, $_POST['rnt_pymnt_dt']);
+               $rent_req_amt = mysqli_real_escape_string($con, $_POST['rate']);
+               $client = mysqli_real_escape_string($con, $_POST['client']);
+               $rate = mysqli_real_escape_string($con, $_POST['rate']);
+               $rnt_dt = $created_on = date('Y-m-d H:i:s');  
+            }
+            //Details data to payment entry table
+            $rentpaymententry = mysqli_query($con, "INSERT INTO `fin_payment_entry_rent` (`payent_id`, `pay_rqst_id`, `orgnstn`, `rent_yr`, `rnt_month`, `rent_typ`, `purpose`, `rnt_code`, `rnt_dt`, `client`, `prjct`, `sub_prj`, `rent_req_amt`, `paid_rent_amt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$orgnsn_name', '$rent_yr', '$rnt_month', '$rent_typ', '$purpose', '$rnt_code', '$rnt_pymnt_dt', '$client', '$prjct', '$sub_prj', '$rent_req_amt', '$paid_amnt', '1')");
+            if($rentpaymententry){
+              // rent code details inserting code
+              $rentpaymentid= mysqli_insert_id($con);
+              $rentdetailsentry = mysqli_query($con, "INSERT INTO `fin_payment_entry_rentdetails` (`rent_id`, `rent_code`, `owner_name`, `rent_amount`, `payment_assign_date`) VALUES ('$rentpaymentid','$rnt_code','$client', '$rate', '$rnt_dt')");
+              if($rentdetailsentry){
+                  $currentdate = date('d-m-y');
+                  $payrequestdetails = mysqli_query($con, "SELECT * FROM `fin_payment_request_rent` WHERE org_id = '$orgnsn_name' AND year ='$rent_yr' AND month ='$rnt_month' AND type ='$rent_typ' AND purpose ='$purpose' AND payment_status = '0'");
+                  $getreq = mysqli_fetch_object($payrequestdetails);
+                  $payreq_id = $getreq->payreq_id;
+                  $rentdeatils = mysqli_query($con, "SELECT * FROM `fin_payment_request_rent_details` WHERE payreq_id = '$payreq_id'");
+                  $getrent = mysqli_fetch_object($rentdeatils);
+                  $rnt_code = $getrent->rnt_code;
+                  // Update emi paid status
+                  $updates=mysqli_query($con,"UPDATE rent_emi_details SET paid_status = '1',payment_date ='$currentdate' WHERE rent_code = '$rnt_code' AND year ='$rent_yr' AND month ='$rnt_month' AND rent_type ='$rent_typ' AND purpose ='$purpose'"); 
+                  if($updates){
+                    $updat=mysqli_query($con,"UPDATE fin_payment_request_rent SET payment_status = '1' WHERE org_id = '$orgnsn_name' AND year ='$rent_yr' AND month ='$rnt_month' AND type ='$rent_typ' AND purpose ='$purpose'");
+                  }
+              }
+            }
+            echo "<script>alert('Rent payment assign details successfully inserted')</script>";
+         }
+         else if ($trnscto == "FD") { // If Transaction Type is 'FD'
+            $fdno = mysqli_real_escape_string($con, $_POST['fdno']);
+            $fdpurpose = mysqli_real_escape_string($con, $_POST['fdpurpose']);
+            $fdmessage = mysqli_real_escape_string($con, $_POST['fdmessage']);
+            $fd_rqst_amt = mysqli_real_escape_string($con, $_POST['fd_rqst_amt']);
+            $prj_name = mysqli_real_escape_string($con, $_POST['prj_name']);
+            $sprj_name = mysqli_real_escape_string($con, $_POST['sprj_name']);
+            $empsqfd = mysqli_query($con, "INSERT INTO `fin_payment_entry_fd` (`payent_id`, `pay_rqst_id`, `req_no`, `req_by`, `empcode`,`prj_name`,`sprj_name`,`fdno`, `fdpurpose`, `fd_message`, `fd_rqst_amt`, `paid_amnt`, `status`) VALUES ('$pentry_last_id', '0', '', '', '','$prj_name','$sprj_name', '$fdno', '$fdpurpose', '$fdmessage', '$fd_rqst_amt', '$paid_amnt', '1')");
+            if($empsqfd)
+            {
+               echo "<script>alert('FD payment assign details successfully inserted')</script>";
+            }
+        }
+        echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
+      } 
+      else 
+      {
+         $msg= "<div class='alert alert-danger'>Error occurred while creating the payment entry. Please try again.</div>";
+      }
+   }
 }    
 ?>
 <title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Auto Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Manual Payment Assignment"; } ?> : Suryam Group</title>
@@ -325,6 +390,8 @@ if(isset($_POST['payasgn']))
                         <option value="Salary Processing">Salary Processing</option>
                         <option value="Operator">Operator Payment</option>
                         <option value="Others">Others</option>
+                        <option value="Rent">Rent</option>
+                        <option value="FD">FD</option>
                            <?php } 
                            else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
                            <option value="">--- Select Transaction To/Type ---</option>
@@ -335,6 +402,8 @@ if(isset($_POST['payasgn']))
                            <option value="Salary Processing">Salary Processing</option>
                            <option value="Operator">Operator Payment</option>
                            <option value="Others">Others</option>
+                           <option value="Rent">Rent</option>
+                           <option value="FD">FD</option>
                         <?php } else { ?>
                            <option value="">--- Select Transaction To/Type ---</option>
                            <?php } ?>
@@ -423,24 +492,35 @@ if(isset($_POST['payasgn']))
                "Salary Processing": "salary_pay_assign/get_sal.php",
                "Expense": "exp_pay_assign/get_exp.php",
                "Others": "other_pay_assign/get_oth.php",
+               "Rent": "rent_pay_assign/get_rent.php",
+               "FD": "fd_pay_assign/fd_payassign.php"
                };
 
                // Check if transaction_to exists in mapping
                if (!apiEndpoints[transaction_to]) {
                return;
                }
+               let dataType = transaction_to === "FD" ? "html" : "json";
                // Fetch data dynamically
                $.ajax({
                   url: apiEndpoints[transaction_to],
                   data: { trans_to: transaction_to, organisation_id: organisation_id },
                   type: 'GET',
-                  dataType: 'json',
+                  dataType: dataType,
                   success: function (response) {
-                     if (response.length === 0) {
-                        alert('No data available');
-                        return;
+                     if (transaction_to === "FD") 
+                     {
+                        var resp = $.trim(response);
+                        $("#showPay").html(resp);
+                     } else 
+                     {
+                        if (response.length === 0) 
+                        {
+                           alert('No data available');
+                           return;
+                        }
+                        handleResponse(response, $select, transaction_to);
                      }
-                     handleResponse(response, $select, transaction_to);
                   },
                   error: function () {
                         alert('Failed to fetch data');
@@ -456,7 +536,9 @@ if(isset($_POST['payasgn']))
                  "Expense": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/exp_pay_assign/cr_exp_payassign.php",
                  "Salary Processing": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/salary_pay_assign/cr_salary_payassign.php",
                  "Operator": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/cr_operator_payasgn.php",
-                 "Others": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/other_pay_assign/cr_others_payasn.php"
+                 "Others": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/other_pay_assign/cr_others_payasn.php",
+                 "Rent": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/rent_pay_assign/cr_rent_payassign.php",
+                 "FD": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/fd_pay_assign/cr_fd_payassign.php"
                };
                const c_data = {
                  "Supplier": {bimpid:<?php echo $_GET['bimpid'];?>,trnsctyp:trnsctn_typ},
@@ -465,7 +547,9 @@ if(isset($_POST['payasgn']))
                  "Expense": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Salary Processing": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Operator": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Others": {bimpid:<?php echo $_GET['bimpid'];?>}
+                 "Others": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "Rent": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "FD": {bimpid:<?php echo $_GET['bimpid'];?>}
                };
                if (!c_apiEndpoints[transaction_to]) {
                   alert("Transaction to/type not available or not implemented");
@@ -489,7 +573,7 @@ if(isset($_POST['payasgn']))
             response.forEach(function (item) {
             let prNums = [];
 
-            if (transaction_to === "Salary Processing" || transaction_to === "Expense" || transaction_to === "Others") {
+            if (transaction_to === "Salary Processing" || transaction_to === "Expense" || transaction_to === "FD") {
                 prNums = [item.pr_num]; // Single value case
             } else {
                 prNums = item.pr_num.split('#'); // Multiple values case
@@ -526,6 +610,8 @@ if(isset($_POST['payasgn']))
             "Salary Processing": "salary_pay_assign/salary_payassign.php",
             "Expense": "exp_pay_assign/exp_payassign.php",
             "Others": "other_pay_assign/others_payasn.php",
+            'Rent': "rent_pay_assign/rent_payassign.php",
+            'FD': "fd_pay_assign/fd_payassign.php"
           };
 
           // Check if transaction type exists in mapping
@@ -564,7 +650,7 @@ if(isset($_POST['payasgn']))
    }
    if(trnsctn_typ.toUpperCase()=='DEBIT')
     {
-        if (!request_num) {
+        if (!request_num && trnscto !== "FD") {
             alert("Please select request number");
             return false;
         }
@@ -577,7 +663,9 @@ if(isset($_POST['payasgn']))
             "Transporter": "all_total",
             "Salary Processing": "all_total",
             "Expense": "all_total",
-            "Others": "requested_amt"
+            "Others": "requested_amt",
+            "Rent": "rate_request_amount",
+            "FD": "amount"
         };
         var errorMessages = {
             "Supplier": "Total request amount should match the paid amount",
@@ -586,7 +674,9 @@ if(isset($_POST['payasgn']))
             "Transporter": "Requested amount should match the paid amount",
             "Salary Processing": "Net payment should match the paid amount",
             "Expense": "Total payment should match the paid amount",
-            "Others": "Requested amount must match the paid amount"
+            "Others": "Requested amount must match the paid amount",
+            "Rent": "Rent rate must match the paid amount",
+            "FD": "FD amount must match the paid amount"
         };
         var organ_fields = {
             "Supplier": "s_organization",
@@ -595,8 +685,27 @@ if(isset($_POST['payasgn']))
             "Transporter": "t_organization",
             "Salary Processing": "sal_organization",
             "Expense": "e_organization",
-            "Others": "ot_organization"
+            "Others": "ot_organization",
+            "Rent": "re_organization"
         };
+         // Additional validation for FD
+         if (trnscto === "FD") 
+         {
+            const fd_fields = [
+            { id:'fdno', name: 'FD number'},
+            { id: 'prjctnm', name: 'Project namme'},
+            { id: 'sbprjctnm', name: 'Sub project number'},
+            { id: 'purpose', name: 'Purpose'},
+            { id: 'message', name: 'Message'}
+           ];
+            for (let fd_field of fd_fields) {
+               let fd_value = document.getElementById(fd_field.id).value.trim();
+               if (!fd_value) {
+                  alert(`${fd_field.name} field is required!`);
+                  return false;
+               }
+            }
+         }
         if (organ_fields[trnscto]) {
             var orgaField = document.getElementById(organ_fields[trnscto]);
 
@@ -635,18 +744,18 @@ if(isset($_POST['payasgn']))
         }
         
         // Additional validation for Salary Processing
-        if (trnscto === "Salary Processing") {
+        if (trnscto === "Salary Processing") 
+        {
             var sp_remark = document.getElementById("sp_remarks");
             if (!sp_remark || sp_remark.value.trim() === '') {
-                alert("Provide Remark");
-                sp_remark.style.border = '1px solid red';
-                return false;
+                  alert("Provide Remark");
+                  sp_remark.style.border = '1px solid red';
+                  return false;
             } else {
-                sp_remark.style.border = ''; // Reset border if valid
+                  sp_remark.style.border = ''; // Reset border if valid
             }
-        }
-
-        return true;
+         }
+         return true;
     }
     else if(trnsctn_typ.toUpperCase()=='CREDIT')
     {
@@ -674,20 +783,7 @@ if(isset($_POST['payasgn']))
             { id:'trnsprtrnm', name: 'Transporter name'},
             { id: 'prjctnm', name: 'Project name'},
             { id: 'subprjnm', name: 'Sub project name'},
-            { id: 'bmsnm', name: 'Billing milestone'},
-            { id: 'ponum', name: 'PO number'},
-            { id: 'place_from', name: 'Place from'},
-            { id: 'place_to', name: 'Place to'},
-            { id: 'distance', name: 'Distance'},
-            { id: 'material_nm', name: 'Material name'},
-            { id: 'mtrl_weight', name: 'Material weight'},
-            { id: 'service_typ', name: 'Service type'},
-            { id: 'lry_model', name: 'Lorry model'},
-            { id: 'dala_typ', name: 'Dala type'},
-            { id: 'carrycap', name: 'Carrying capacity'},
-            { id: 'totalamnt', name: 'Total amount'},
-            { id: 'rateper_km', name: 'Rate per KM'},
-            { id: 'rateper_kg', name: 'Rate per KG'}
+            { id: 'ponum', name: 'PO number'}
          ];
          for (let tr_field of tr_fields) {
             let tr_value = document.getElementById(tr_field.id).value.trim();
@@ -795,6 +891,45 @@ if(isset($_POST['payasgn']))
          }
          return true;
       }
+      else if(trnscto === "Rent")
+      {
+         const rnt_fields = [
+            { id:'year', name: 'Year'},
+            { id: 'month', name: 'Month'},
+            { id: 'type', name: 'Type'},
+            { id: 'purpose', name: 'Purpose'}
+         ];
+         for (let rnt_field of rnt_fields) {
+            let rnt_value = document.getElementById(rnt_field.id).value.trim();
+            if (!rnt_value) {
+               alert(`${rnt_field.name} field is required!`);
+               return false;
+            }
+         }
+        let selected = document.querySelector('input[name="selected_row"]:checked');
+        if (!selected) {
+            alert("Please select one of the rent details.");
+            return false; // Prevent form submission
+        }
+        return true;
+      }
+      if (trnscto === "FD") 
+         {
+            const fd_fields = [
+            { id: 'prjctnm', name: 'Project namme'},
+            { id: 'sbprjctnm', name: 'Sub project number'},
+            { id: 'purpose', name: 'Purpose'},
+            { id: 'message', name: 'Message'}
+           ];
+            for (let fd_field of fd_fields) {
+               let fd_value = document.getElementById(fd_field.id).value.trim();
+               if (!fd_value) {
+                  alert(`${fd_field.name} field is required!`);
+                  return false;
+               }
+            }
+         }
+      
     }
     else
     {
@@ -805,4 +940,3 @@ if(isset($_POST['payasgn']))
   }
 
 </script>
-
