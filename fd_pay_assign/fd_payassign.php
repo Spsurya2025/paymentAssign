@@ -3,6 +3,8 @@
     $(document).ready(function () {
       $('#fdno').select2();
       $('#prjctnm').select2();
+      $('#sbprjctnm').select2();
+      
     });
     $("#prjctnm").change(function(){
       $("#sbprjctnm").html('<option value="">--- Select Sub Project ---</option>');
@@ -76,7 +78,7 @@
         <select class="form-control" name="prj_name" id="prjctnm">
           <option value="">--- Select Project ---</option>
         <?php
-          $prjqr = mysqli_query($con, "SELECT * FROM `prj_project` WHERE `status`='1'");
+          $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' AND ptype_org='$org_id'");
           while ($prjnm = mysqli_fetch_object($prjqr)) {
             echo "<option value='$prjnm->id'>".$prjnm->pname."</option>";
           }
@@ -100,14 +102,14 @@
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="message">Message</label>
-        <textarea name="fdmessage" id="message" class="form-control"></textarea>
+        <label for="amount">FD Amount</label>
+        <input type="text" class="form-control" name="fd_rqst_amt" id="amount" readonly>
       </div>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="amount">FD Amount</label>
-        <input type="text" class="form-control" name="fd_rqst_amt" id="amount" readonly>
+        <label for="message">Message</label>
+        <textarea name="fdmessage" id="message" class="form-control"></textarea>
       </div>
     </div>
   </div>        

@@ -108,28 +108,28 @@
   }
 </script>
  <script>
- $("#op_id").change(function () {
+  $("#op_id").change(function () {
     const selectedValue = $(this).val();
     $.ajax({
-        url: "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/get_optr_details.php",
-        type: 'GET',
-        data: { optr_id: selectedValue }, // Fix data format
-        success: function (response) {
-            const data = JSON.parse(response); // Parse JSON response
-            // Populate fields with response data
-            $("#project").html(data.project_options);
-            $("#subproject").html(data.subproject_options);
-            $("#state").val(data.state);
-            $("#district").val(data.district);
-            $("#block").val(data.block);
-            $("#g_panch").val(data.g_panch);
-            $("#village").val(data.village);
-            $("#accnum").val(data.accnum);
-            $("#rate").val(data.rate);
-        },
-        error: function () {
-            alert("Failed to fetch data");
-        }
+      url: "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/get_optr_details.php",
+      type: 'GET',
+      data: { optr_id: selectedValue }, // Fix data format
+      success: function (response) {
+        const data = JSON.parse(response); // Parse JSON response
+        // Populate fields with response data
+        $("#project").html(data.project_options);
+        $("#subproject").html(data.subproject_options);
+        $("#state").val(data.state);
+        $("#district").val(data.district);
+        $("#block").val(data.block);
+        $("#g_panch").val(data.g_panch);
+        $("#village").val(data.village);
+        $("#accnum").val(data.accnum);
+        $("#rate").val(data.rate);
+      },
+      error: function () {
+        alert("Failed to fetch data");
+      }
     });
   });
  </script>

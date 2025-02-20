@@ -3,6 +3,8 @@
     $(document).ready(function () {
       $('#fdno').select2();
       $('#prjctnm').select2();
+      $('#sbprjctnm').select2();
+      
     });
     $("#prjctnm").change(function(){
       $("#sbprjctnm").html('<option value="">--- Select Sub Project ---</option>');
@@ -30,7 +32,7 @@
         <select class="form-control" name="prj_name" id="prjctnm">
           <option value="">--- Select Project ---</option>
         <?php
-          $prjqr = mysqli_query($con, "SELECT * FROM `prj_project` WHERE `status`='1'");
+          $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' AND ptype_org='$_GET[org_id]'");
           while ($prjnm = mysqli_fetch_object($prjqr)) {
             echo "<option value='$prjnm->id'>".$prjnm->pname."</option>";
           }

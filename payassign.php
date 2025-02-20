@@ -196,7 +196,8 @@ if(isset($_POST['payasgn']))
                echo "<script>alert('Others payment assign details successfully inserted')</script>";
             }
          }
-         else if ($trnscto == "Rent") { // If Transaction Type is 'Rent'
+         else if ($trnscto == "Rent") 
+         { // If Transaction Type is 'Rent'
             $rent_yr = mysqli_real_escape_string($con, $_POST['year']);
             $preqnum_r = mysqli_real_escape_string($con, $_POST['preqnum']);
             $rnt_month = mysqli_real_escape_string($con, $_POST['month']);
@@ -248,7 +249,8 @@ if(isset($_POST['payasgn']))
             }
             echo "<script>alert('Rent payment assign details successfully inserted')</script>";
          }
-         else if ($trnscto == "FD") { // If Transaction Type is 'FD'
+         else if ($trnscto == "FD") 
+         { // If Transaction Type is 'FD'
             $fdno = mysqli_real_escape_string($con, $_POST['fdno']);
             $fdpurpose = mysqli_real_escape_string($con, $_POST['fdpurpose']);
             $fdmessage = mysqli_real_escape_string($con, $_POST['fdmessage']);
@@ -260,7 +262,45 @@ if(isset($_POST['payasgn']))
             {
                echo "<script>alert('FD payment assign details successfully inserted')</script>";
             }
-        }
+         }
+         else if ($trnscto == "Collection") 
+         { // If Transaction Type is 'Collection'
+            $debtor_typ = mysqli_real_escape_string($con, $_POST['debtor_typ']);
+            $clientnm = mysqli_real_escape_string($con, $_POST['clientnm']);
+            $prj_name = mysqli_real_escape_string($con, $_POST['prj_name']);
+            $sbprjctnm = mysqli_real_escape_string($con, $_POST['sbprjctnm']);
+            $col_requested_amt = mysqli_real_escape_string($con, $_POST['col_requested_amt']);
+            $remark = mysqli_real_escape_string($con, $_POST['remark']);
+            $colldqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_collection` (`payent_id`, `pay_rqst_id`, `debtor_typ`, `clientnm`,`prj_name`, `sprj_name`, `col_req_amt`, `paid_col_amt`,`remarks`,`status`) VALUES ('$pentry_last_id', '$pay_request_id', '$debtor_typ', '$clientnm','$prj_name','$sbprjctnm','$col_requested_amt', '$paid_amnt','$remark', '1')");
+            if($colldqr)
+            {
+               echo "<script>alert('Collection payment assign details successfully inserted')</script>";
+            }
+         }
+         else if ($trnscto == "GST") 
+         { // If Transaction Type is 'GST'
+            $organisation = $orgnsn_name;
+            $state_nm = mysqli_real_escape_string($con, $_POST['statenm']);
+            $gstnum = mysqli_real_escape_string($con, $_POST['gstno']);
+            $fromdate = mysqli_real_escape_string($con, $_POST['fromdate']);
+            $todate = mysqli_real_escape_string($con, $_POST['todate']);
+            $reqamt = mysqli_real_escape_string($con, $_POST['reqamt']);
+            $gsttqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_gst` (`payent_id`, `pay_rqst_id`, `organisation`, `state_nm`, `gstnum`, `gst_req_amt`, `fromdate`, `todate`, `paid_gst_amt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$organisation', '$state_nm', '$gstnum', '$reqamt', '$fromdate', '$todate', '$paid_amnt', '1')");
+            if($gsttqr)
+            {
+               echo "<script>alert('GST payment assign details successfully inserted')</script>";
+            }
+         }
+         else if ($trnscto == "Withdraw") 
+         { // If Transaction Type is 'Withdraw'
+            $wdrawer_nm = mysqli_real_escape_string($con, $_POST['drwrnm']);
+            $reqamt = mysqli_real_escape_string($con, $_POST['reqamt']);
+            $ownrwdqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_owner_withdraw` (`payent_id`, `pay_rqst_id`, `wdrawer_nm`, `withdrw_req_amt`, `paid_wd_amt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$wdrawer_nm', '$reqamt', '$paid_amnt', '1')");
+            if($ownrwdqr)
+            {
+               echo "<script>alert('Withdraw payment assign details successfully inserted')</script>";
+            }
+         }
         echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
       } 
       else 
@@ -392,6 +432,9 @@ if(isset($_POST['payasgn']))
                         <option value="Others">Others</option>
                         <option value="Rent">Rent</option>
                         <option value="FD">FD</option>
+                        <option value="Collection">Collection</option>
+                        <option value="GST">GST</option>
+                        <option value="Withdraw">Withdraw</option>
                            <?php } 
                            else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
                            <option value="">--- Select Transaction To/Type ---</option>
@@ -404,6 +447,9 @@ if(isset($_POST['payasgn']))
                            <option value="Others">Others</option>
                            <option value="Rent">Rent</option>
                            <option value="FD">FD</option>
+                           <option value="Collection">Collection</option>
+                           <option value="GST">GST</option>
+                           <option value="Withdraw">Withdraw</option>
                         <?php } else { ?>
                            <option value="">--- Select Transaction To/Type ---</option>
                            <?php } ?>
@@ -481,6 +527,7 @@ if(isset($_POST['payasgn']))
             $select.refreshOptions();
             $("#showPay").html('');
             $("#payment_req_id").val('');
+            $("#payasgn").prop("disabled", true); // Disable submit button
             // Define API endpoint mappings based on transaction type
             if(trnsctn_typ.toUpperCase() == 'DEBIT')
             {
@@ -493,7 +540,10 @@ if(isset($_POST['payasgn']))
                "Expense": "exp_pay_assign/get_exp.php",
                "Others": "other_pay_assign/get_oth.php",
                "Rent": "rent_pay_assign/get_rent.php",
-               "FD": "fd_pay_assign/fd_payassign.php"
+               "FD": "fd_pay_assign/fd_payassign.php",
+               "Collection": "colctn_pay_assign/get_col.php",
+               "GST": "gst_pay_assign/get_gst.php",
+               "Withdraw": "withdw_pay_assign/get_with.php"
                };
 
                // Check if transaction_to exists in mapping
@@ -517,13 +567,17 @@ if(isset($_POST['payasgn']))
                         if (response.length === 0) 
                         {
                            alert('No data available');
+                           $("#payasgn").prop("disabled", false); // Enable submit button after success
                            return;
                         }
+                        
                         handleResponse(response, $select, transaction_to);
                      }
+                     $("#payasgn").prop("disabled", false); // Enable submit button after success
                   },
                   error: function () {
                         alert('Failed to fetch data');
+                        $("#payasgn").prop("disabled", false); // Enable submit button after success
                   }
                });
             }
@@ -538,7 +592,10 @@ if(isset($_POST['payasgn']))
                  "Operator": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/cr_operator_payasgn.php",
                  "Others": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/other_pay_assign/cr_others_payasn.php",
                  "Rent": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/rent_pay_assign/cr_rent_payassign.php",
-                 "FD": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/fd_pay_assign/cr_fd_payassign.php"
+                 "FD": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/fd_pay_assign/cr_fd_payassign.php",
+                 "Collection": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/colctn_pay_assign/cr_col_payassign.php",
+                 "GST": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/gst_pay_assign/cr_gst_payassign.php",
+                 "Withdraw": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/withdw_pay_assign/cr_withdrw_payassign.php"
                };
                const c_data = {
                  "Supplier": {bimpid:<?php echo $_GET['bimpid'];?>,trnsctyp:trnsctn_typ},
@@ -549,7 +606,10 @@ if(isset($_POST['payasgn']))
                  "Operator": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Others": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Rent": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "FD": {bimpid:<?php echo $_GET['bimpid'];?>}
+                 "FD": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "Collection": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "GST": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "Withdraw": {bimpid:<?php echo $_GET['bimpid'];?>}
                };
                if (!c_apiEndpoints[transaction_to]) {
                   alert("Transaction to/type not available or not implemented");
@@ -562,9 +622,11 @@ if(isset($_POST['payasgn']))
                     success: function (response) {
                         var resp = $.trim(response);
                         $("#showPay").html(resp);
+                        $("#payasgn").prop("disabled", false); // Enable submit button after success
                     },
                     error: function () {
                         alert('Failed to fetch data');
+                        $("#payasgn").prop("disabled", true); // Enable submit button after success
                     }
                 });
             }         
@@ -573,7 +635,7 @@ if(isset($_POST['payasgn']))
             response.forEach(function (item) {
             let prNums = [];
 
-            if (transaction_to === "Salary Processing" || transaction_to === "Expense" || transaction_to === "FD") {
+            if (transaction_to === "Salary Processing" || transaction_to === "Expense") {
                 prNums = [item.pr_num]; // Single value case
             } else {
                 prNums = item.pr_num.split('#'); // Multiple values case
@@ -610,8 +672,10 @@ if(isset($_POST['payasgn']))
             "Salary Processing": "salary_pay_assign/salary_payassign.php",
             "Expense": "exp_pay_assign/exp_payassign.php",
             "Others": "other_pay_assign/others_payasn.php",
-            'Rent': "rent_pay_assign/rent_payassign.php",
-            'FD': "fd_pay_assign/fd_payassign.php"
+            "Rent": "rent_pay_assign/rent_payassign.php",
+            "Collection": "colctn_pay_assign/col_payassign.php",
+            "GST": "gst_pay_assign/gst_payassign.php",
+            "Withdraw": "withdw_pay_assign/withdrw_payassign.php"
           };
 
           // Check if transaction type exists in mapping
@@ -629,9 +693,11 @@ if(isset($_POST['payasgn']))
             type: 'GET',
             success: function (response) {
                 $("#showPay").html($.trim(response));
+                $("#payasgn").prop("disabled", false); // Enable submit button after success
             },
             error: function () {
                 alert(`Failed to fetch ${trnsto.toLowerCase()} data`);
+                $("#payasgn").prop("disabled", true); // Enable submit button after success
             }
           });
         });
@@ -665,7 +731,10 @@ if(isset($_POST['payasgn']))
             "Expense": "all_total",
             "Others": "requested_amt",
             "Rent": "rate_request_amount",
-            "FD": "amount"
+            "FD": "amount",
+            "Collection": "col_requested_amt",
+            "GST": "reqamt",
+            "Withdraw": "reqamt"
         };
         var errorMessages = {
             "Supplier": "Total request amount should match the paid amount",
@@ -676,7 +745,10 @@ if(isset($_POST['payasgn']))
             "Expense": "Total payment should match the paid amount",
             "Others": "Requested amount must match the paid amount",
             "Rent": "Rent rate must match the paid amount",
-            "FD": "FD amount must match the paid amount"
+            "FD": "FD amount must match the paid amount",
+            "Collection": "Requested amount must match the paid amount",
+            "GST": "Amount must match the paid amount",
+            "Withdraw": "Request amount must match the paid amount"
         };
         var organ_fields = {
             "Supplier": "s_organization",
@@ -686,15 +758,18 @@ if(isset($_POST['payasgn']))
             "Salary Processing": "sal_organization",
             "Expense": "e_organization",
             "Others": "ot_organization",
-            "Rent": "re_organization"
+            "Rent": "re_organization",
+            "Collection": "co_organization",
+            "GST": "gst_organization",
+            "Withdraw": "w_organization"
         };
          // Additional validation for FD
          if (trnscto === "FD") 
          {
             const fd_fields = [
-            { id:'fdno', name: 'FD number'},
-            { id: 'prjctnm', name: 'Project namme'},
-            { id: 'sbprjctnm', name: 'Sub project number'},
+            { id:'fdno', name: 'FD no.'},
+            { id: 'prjctnm', name: 'Project name'},
+            { id: 'sbprjctnm', name: 'Sub project name'},
             { id: 'purpose', name: 'Purpose'},
             { id: 'message', name: 'Message'}
            ];
@@ -706,6 +781,27 @@ if(isset($_POST['payasgn']))
                }
             }
          }
+         if (trnscto === "Collection") 
+         {
+            const col_fields = [
+            { id: 'prjctnm', name: 'Project name'},
+            { id: 'sbprjctnm', name: 'Sub project name'},
+            { id: 'remark', name: 'Ramark'}
+           ];
+            for (let col_field of col_fields) {
+               let col_value = document.getElementById(col_field.id).value.trim();
+               let col_id =  document.getElementById(col_field.id);
+               if (!col_value) {
+                  alert(`${col_field.name} field is required!`);
+                  col_id.style.border = '1px solid red';
+                  return false;
+               }
+               else {
+                  col_id.style.border = ''; // Reset border if valid
+               }
+            }
+         }
+         
         if (organ_fields[trnscto]) {
             var orgaField = document.getElementById(organ_fields[trnscto]);
 
@@ -914,22 +1010,73 @@ if(isset($_POST['payasgn']))
         return true;
       }
       if (trnscto === "FD") 
-         {
-            const fd_fields = [
-            { id: 'prjctnm', name: 'Project namme'},
-            { id: 'sbprjctnm', name: 'Sub project number'},
-            { id: 'purpose', name: 'Purpose'},
-            { id: 'message', name: 'Message'}
-           ];
-            for (let fd_field of fd_fields) {
-               let fd_value = document.getElementById(fd_field.id).value.trim();
-               if (!fd_value) {
-                  alert(`${fd_field.name} field is required!`);
-                  return false;
-               }
+      {
+         const fd_fields = [
+         { id: 'prjctnm', name: 'Project name'},
+         { id: 'sbprjctnm', name: 'Sub project name'},
+         { id: 'purpose', name: 'Purpose'},
+         { id: 'message', name: 'Message'}
+         ];
+         for (let fd_field of fd_fields) {
+            let fd_value = document.getElementById(fd_field.id).value.trim();
+            if (!fd_value) {
+               alert(`${fd_field.name} field is required!`);
+               return false;
             }
          }
-      
+      }
+      if (trnscto === "Collection") 
+      {
+         const col_fields = [
+         { id: 'dbtr_typ', name: 'Debtor type'},
+         { id: 'client_nm', name: 'Client name'},
+         { id: 'prjctnm', name: 'Project name'},
+         { id: 'sbprjctnm', name: 'Sub project name'},
+         { id: 'remark', name: 'Ramark'}
+         ];
+         for (let col_field of col_fields) {
+            let col_value = document.getElementById(col_field.id).value.trim();
+            let col_id =  document.getElementById(col_field.id);
+            if (!col_value) {
+               alert(`${col_field.name} field is required!`);
+               col_id.style.border = '1px solid red';
+               return false;
+            }
+            else {
+               col_id.style.border = ''; // Reset border if valid
+            }
+         }
+      } 
+      if (trnscto === "GST") 
+      {
+         const gst_fields = [
+         { id: 'statenm', name: 'State name'},
+         { id: 'gstno', name: 'GSTIN no.'},
+         { id: 'fromdt', name: 'From date'},
+         { id: 'todt', name: 'To date'},
+         { id: 'remark', name: 'Ramark'}
+         ];
+         for (let gst_field of gst_fields) {
+            let gst_value = document.getElementById(gst_field.id).value.trim();
+            let gst_id =  document.getElementById(gst_field.id);
+            if (!gst_value) {
+               alert(`${gst_field.name} field is required!`);
+               gst_id.style.border = '1px solid red';
+               return false;
+            }
+            else {
+               gst_id.style.border = ''; // Reset border if valid
+            }
+         }
+      }   
+      if (trnscto === "Withdraw") 
+      {
+         let with_value = document.getElementById('drwrnm').value.trim();
+         if (!with_value) {
+            alert('Name field is required!');
+            return false;
+         }
+      }  
     }
     else
     {

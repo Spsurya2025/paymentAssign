@@ -119,34 +119,34 @@
 </script>
 <script>
   $(document).ready(function() {
-            $(".rentdetails").change(function() {
-                if ($(this).val() != '') {
-                    var org = $("#pay_orgnstn").val();
-                    var yr = $("#year").val();
-                    var mnth = $("#month").val();
-                    var typ = $("#type").val();
-                    var prps = $("#purpose").val();
-                    if (org != '' && yr != '' && mnth != '' && typ != '' && prps != '') {
-                        $.ajax({
-                            url: "<?php echo SITE_URL; ?>/basic/finance/payment_assign/rent_pay_assign/get_rent_pymnt_rqst.php",
-                            data: {
-                                org_id: org,
-                                yr_nm: yr,
-                                mnth_nm: mnth,
-                                type: typ,
-                                purpose: prps
-                            },
-                            type: 'POST',
-                            success: function(response) {
-                                var resp = $.trim(response);
-                                $("#rent_bind").html(resp);
-                            }
-                        })
-                    }
-                } else {
-                    $("#rent_bind").html('');
-                }
-            });
-        });
+    $(".rentdetails").change(function() {
+      if ($(this).val() != '') {
+        var org = $("#pay_orgnstn").val();
+        var yr = $("#year").val();
+        var mnth = $("#month").val();
+        var typ = $("#type").val();
+        var prps = $("#purpose").val();
+        if (org != '' && yr != '' && mnth != '' && typ != '' && prps != '') {
+          $.ajax({
+            url: "<?php echo SITE_URL; ?>/basic/finance/payment_assign/rent_pay_assign/get_rent_pymnt_rqst.php",
+            data: {
+              org_id: org,
+              yr_nm: yr,
+              mnth_nm: mnth,
+              type: typ,
+              purpose: prps
+            },
+            type: 'POST',
+            success: function(response) {
+              var resp = $.trim(response);
+              $("#rent_bind").html(resp);
+            }
+          })
+        }
+      } else {
+          $("#rent_bind").html('');
+      }
+    });
+  });
 </script>
 

@@ -12,9 +12,17 @@ if(isset($_POST['payasgn']))
 { 
    $msg = '1';
    $created_on = date('Y-m-d H:i:s');
+   $trnscto = mysqli_real_escape_string($con, $_POST['trnscto']);
    $updpeqr = "UPDATE fin_payment_entry SET pay_approval_stat='$msg',frst_apprv='$empid',frst_apprv_date='$created_on' WHERE id='$peid' AND bnkimprt_id='$bnkimprt_id'";
    if(mysqli_query($con, $updpeqr))
    {
+      if($trnscto == "Collection")
+      {
+         $prj_name = mysqli_real_escape_string($con, $_POST['prj_name']);
+         $sbprjctnm = mysqli_real_escape_string($con, $_POST['sbprjctnm']);
+         $remark = mysqli_real_escape_string($con, $_POST['remark']);
+         $updateCollectionentry = mysqli_query($con, "UPDATE fin_payment_entry_collection SET prj_name='$prj_name',sprj_name='$sbprjctnm',remarks='$remark' WHERE payent_id='$peid'");
+      }
       $updbankim = mysqli_query($con,"UPDATE fin_banking_imports SET is_pay_asgnd='1',is_pay_aprvd='1' WHERE id='$bnkimprt_id'");
       echo "<script>alert('Successfully updated')</script>";
       echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
@@ -180,7 +188,7 @@ elseif(isset($_POST['payrej']))
                <div class="col-lg-12">
                   <div class="form-group">
                    <?php if($fthimps->is_pay_aprvd == '0') { ?>
-                     <?php if($row->trnscto == 'Supplier' || $row->trnscto == 'Vendor' || $row->trnscto == 'Others' || $row->trnscto == 'Rent' || $row->trnscto == 'Transporter' || $row->trnscto == 'Operator' || $row->trnscto == 'Salary Processing' || $row->trnscto == 'Expense') { ?>
+                     <?php if($row->trnscto == 'Supplier' || $row->trnscto == 'Vendor' || $row->trnscto == 'Others' || $row->trnscto == 'Collection' || $row->trnscto == 'Rent' || $row->trnscto == 'Transporter' || $row->trnscto == 'Withdraw' || $row->trnscto == 'GST' || $row->trnscto == 'Operator' || $row->trnscto == 'Salary Processing' || $row->trnscto == 'Expense') { ?>
                      <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
                         <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" onclick="return confirm('Are you sure you want to assign?')">
                         <input type="submit" name="payrej" id="payrej" value="Reject" class="btn btn-danger mr-2" onclick="return confirm('Are you sure you want to reject?')">
@@ -310,6 +318,51 @@ elseif(isset($_POST['payrej']))
       if((trnsto == "Rent")){
       $.ajax({
          url: "rent_pay_assign/rent_payassign.php",
+         data:{
+            py_req_id: pay_req_id,
+            request_num:request_num,
+            peid:peid
+         },
+         type: 'GET',
+         success: function(response) {
+            var resp = $.trim(response);
+            $("#showPay").html(resp); 
+         }
+      });  
+      }
+      if((trnsto == "Collection")){
+      $.ajax({
+         url: "colctn_pay_assign/col_payassign.php",
+         data:{
+            py_req_id: pay_req_id,
+            request_num:request_num,
+            peid:peid
+         },
+         type: 'GET',
+         success: function(response) {
+            var resp = $.trim(response);
+            $("#showPay").html(resp); 
+         }
+      });  
+      }
+      if((trnsto == "GST")){
+      $.ajax({
+         url: "gst_pay_assign/gst_payassign.php",
+         data:{
+            py_req_id: pay_req_id,
+            request_num:request_num,
+            peid:peid
+         },
+         type: 'GET',
+         success: function(response) {
+            var resp = $.trim(response);
+            $("#showPay").html(resp); 
+         }
+      });  
+      }
+      if((trnsto == "Withdraw")){
+      $.ajax({
+         url: "withdw_pay_assign/withdrw_payassign.php",
          data:{
             py_req_id: pay_req_id,
             request_num:request_num,

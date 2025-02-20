@@ -16,24 +16,6 @@
                 <th>Amount</th>
             </tr>
         </thead>
-        <script>
-            $(document).ready(function() {
-                $('#choose_rnt_code').click(function() {
-                    $('.rnt_code,.rnt_pymnt_dt,.client,.p_id,.sp_id,.rate').attr('disabled', false);
-                    var cal_sum = 0;
-                    $(this.form.elements).filter(':checkbox').prop('checked', this.checked);
-                    if ($("#choose_rnt_code").is(":checked")) { 
-                        $(".rate").each(function(){
-                            cal_sum += +$(this).val();
-                        });
-                        $(".ttl_rate").val(cal_sum.toFixed(2));
-                    }else{
-                        $(".ttl_rate").val('');
-                        //var cal_sum = 0;
-                    } 
-               });
-            });
-        </script>
         <tbody>
             <?php 
                 $org_id = $_POST['org_id']; 
