@@ -43,7 +43,7 @@
   <div class="col-lg-12">
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
         <div class="form-group">
-          <label for="dbtr_typ">Debtor Type</label>
+          <label for="dbtr_typ">Debtor Type<span style="color:red">*</span></label>
           <select class="form-control select2" name="debtor_typ" id="dbtr_typ">
             <option value="">--- Select Debtor Type ---</option>
             <?php
@@ -57,7 +57,7 @@
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
         <div class="form-group">
-          <label for="client_nm">Client Name</label>
+          <label for="client_nm">Client Name<span style="color:red">*</span></label>
           <select class="form-control client_nm" name="clientnm" id="client_nm">
             <option value="">--- Select Client Name ---</option>
           </select>
@@ -65,7 +65,7 @@
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="prjctnm">Project Name</label>
+        <label for="prjctnm">Project Name<span style="color:red">*</span></label>
         <select class="form-control" name="prj_name" id="prjctnm">
           <option value="">--- Select Project ---</option>
         <?php
@@ -79,7 +79,7 @@
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="sbprjctnm">Sub Project Name</label>
+        <label for="sbprjctnm">Sub Project Name<span style="color:red">*</span></label>
         <select class="form-control" name="sbprjctnm" id="sbprjctnm">
           <option value="">--- Select Sub Project ---</option>
         </select>
@@ -87,7 +87,7 @@
     </div>
     <div class="col-lg-12 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="remark">Remark</label>
+        <label for="remark">Remark<span style="color:red">*</span></label>
         <textarea class="form-control" name="remark" id="remark"></textarea>
       </div>
     </div>

@@ -126,6 +126,8 @@
         $("#village").val(data.village);
         $("#accnum").val(data.accnum);
         $("#rate").val(data.rate);
+        $("#month").val('');
+        $("#total_amt").val('');
       },
       error: function () {
         alert("Failed to fetch data");

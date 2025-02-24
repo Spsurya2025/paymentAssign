@@ -18,7 +18,6 @@ if (!isset($_GET['request_num'])) {
     $pr_id = $_GET['py_req_id'];
     $gstcqr = mysqli_query($con, "SELECT * FROM fin_payment_request_gst where payreq_id = '$pr_id'");
     $fthgst = mysqli_fetch_object($gstcqr);
-    echo "SELECT id,organisation FROM `prj_organisation` WHERE id='$fthgst->orgnstn'";
 ?>
 <!-- GST ther Payment Details Form -->
 <div class="row" style="margin-top: 20px;">

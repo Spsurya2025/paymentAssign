@@ -68,14 +68,14 @@
         <select class="form-control" name="expns_for" id="expns_for">
         	<option value="">--- Employee Name ---</option>
         	<?php
-            $sqlemp="SELECT x.ref_id, x.position, y.id, y.fullname AS name, y.status, d.dept_name FROM hr_employee_service_register x JOIN mstr_emp y ON x.emp_name = y.id JOIN hr_department d ON x.department_id = d.id WHERE x.ref_id = 0 AND y.status = '1' UNION SELECT x.ref_id, x.position, y.id, y.fullname AS name, y.status, d.dept_name FROM hr_employee_service_register x JOIN mstr_emp y ON y.mstr_ref_id = x.ref_id JOIN hr_department d ON x.department_id = d.id WHERE x.ref_id <> 0 AND y.status = '1' ORDER BY id ASC";
+            $sqlemp="SELECT x.ref_id, x.position, x.employee_id, y.id, y.fullname AS name, y.status, d.dept_name FROM hr_employee_service_register x JOIN mstr_emp y ON x.emp_name = y.id JOIN hr_department d ON x.department_id = d.id WHERE x.ref_id = 0 AND y.status = '1' UNION SELECT x.ref_id, x.position, x.employee_id, y.id, y.fullname AS name, y.status, d.dept_name FROM hr_employee_service_register x JOIN mstr_emp y ON y.mstr_ref_id = x.ref_id JOIN hr_department d ON x.department_id = d.id WHERE x.ref_id <> 0 AND y.status = '1' ORDER BY id ASC";
         		$empqr = mysqli_query($con, $sqlemp);
         		while($data=mysqli_fetch_object($empqr))
             {
               if ($data->id == '0') {
                   $optionName = "Other";
               } else {
-                  $optionName = $data->name . " (" . $data->dept_name . ", " . $data->position . ")";
+                  $optionName = $data->name . " (" . $data->dept_name . ", " . $data->position . ", " . $data->employee_id . ")";
               }
             ?>
             <option value="<?php echo $data->id; ?>"> <?php echo $optionName; ?></option>

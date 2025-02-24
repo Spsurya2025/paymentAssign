@@ -45,13 +45,18 @@ if (!isset($_GET['request_num'])) {
         <label for="org_id">Expense For</label>
         <select class="form-control" name="expns_for" id="expns_for" readonly>
           <?php
-            $exq = "SELECT id,fullname FROM `mstr_emp` WHERE id='$fthex->req_for'";
-            $sql1=mysqli_query($con,$exq);
-            while ($exf = mysqli_fetch_object($sql1))
+            $sqlemp="SELECT x.ref_id, x.position, x.employee_id, y.id, y.fullname AS name, y.status, d.dept_name FROM hr_employee_service_register x JOIN mstr_emp y ON x.emp_name = y.id JOIN hr_department d ON x.department_id = d.id WHERE x.ref_id = 0 And y.id='$fthex->req_for' AND y.status = '1' UNION SELECT x.ref_id, x.position, x.employee_id, y.id, y.fullname AS name, y.status, d.dept_name FROM hr_employee_service_register x JOIN mstr_emp y ON y.mstr_ref_id = x.ref_id JOIN hr_department d ON x.department_id = d.id WHERE x.ref_id <> 0 AND y.status = '1'And y.id='$fthex->req_for' ORDER BY id ASC";
+        		$empqr = mysqli_query($con, $sqlemp);
+        		while($data=mysqli_fetch_object($empqr))
             {
-              echo '<option value="'. $exf->id . '">' . $exf->fullname .'</option>';
-            }
-          ?>
+              if ($data->id == '0') {
+                  $optionName = "Other";
+              } else {
+                  $optionName = $data->name . " (" . $data->dept_name . ", " . $data->position . ", " . $data->employee_id . ")";
+              }
+            ?>
+            <option value="<?php echo $data->id; ?>"> <?php echo $optionName; ?></option>
+            <?php } ?>
         </select>
       </div>
     </div>

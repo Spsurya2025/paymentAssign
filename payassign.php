@@ -21,7 +21,7 @@ if(isset($_POST['payasgn']))
    $created_on = date('Y-m-d H:i:s');
    $sql = "SELECT * FROM fin_payment_entry WHERE preqnum = '$preqnum'";
    $result = $con->query($sql);
-   if (strtoupper($trnsc_type) == 'DEBIT' && $result->num_rows > 0) 
+   if (strtoupper($trnsc_type) == 'DEBIT' && $trnscto != "FD" && $trnscto != "Bank Transfer"  && $result->num_rows > 0) 
    {       
       echo "<script>alert('Payment request number: $preqnum already exists!');</script>";
       echo "<script>window.history.go(-1);</script>";
@@ -301,6 +301,17 @@ if(isset($_POST['payasgn']))
                echo "<script>alert('Withdraw payment assign details successfully inserted')</script>";
             }
          }
+         else if ($trnscto == "Bank Transfer") 
+         { // If Transaction Type is 'Bank Transfer'
+            $org_nm = mysqli_real_escape_string($con, $_POST['org_nm']);
+            $bnkaccnt = mysqli_real_escape_string($con, $_POST['bnkaccnt']);
+            $bnktrn_remarks = mysqli_real_escape_string($con, $_POST['bnktrn_remarks']);             
+            $banktrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_bank_trans` (`payent_id`, `org_nm`, `bnkaccnt`,`paid_amnt`, `bnktrn_remarks`, `created_by`) VALUES ('$pentry_last_id', '$org_nm', '$bnkaccnt', '$paid_amnt', '$bnktrn_remarks', '$empid')");
+            if($banktrqr)
+            {
+               echo "<script>alert('Bank transfer payment assign details successfully inserted')</script>";
+            }
+          }
         echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
       } 
       else 
@@ -435,6 +446,7 @@ if(isset($_POST['payasgn']))
                         <option value="Collection">Collection</option>
                         <option value="GST">GST</option>
                         <option value="Withdraw">Withdraw</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
                            <?php } 
                            else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
                            <option value="">--- Select Transaction To/Type ---</option>
@@ -450,6 +462,7 @@ if(isset($_POST['payasgn']))
                            <option value="Collection">Collection</option>
                            <option value="GST">GST</option>
                            <option value="Withdraw">Withdraw</option>
+                           <option value="Bank Transfer">Bank Transfer</option>
                         <?php } else { ?>
                            <option value="">--- Select Transaction To/Type ---</option>
                            <?php } ?>
@@ -543,14 +556,15 @@ if(isset($_POST['payasgn']))
                "FD": "fd_pay_assign/fd_payassign.php",
                "Collection": "colctn_pay_assign/get_col.php",
                "GST": "gst_pay_assign/get_gst.php",
-               "Withdraw": "withdw_pay_assign/get_with.php"
+               "Withdraw": "withdw_pay_assign/get_with.php",
+               "Bank Transfer": "banktr_pay_assign/banktr_payassign.php"
                };
 
                // Check if transaction_to exists in mapping
                if (!apiEndpoints[transaction_to]) {
                return;
                }
-               let dataType = transaction_to === "FD" ? "html" : "json";
+               let dataType = transaction_to === "FD" || transaction_to === "Bank Transfer"  ? "html" : "json";
                // Fetch data dynamically
                $.ajax({
                   url: apiEndpoints[transaction_to],
@@ -558,11 +572,12 @@ if(isset($_POST['payasgn']))
                   type: 'GET',
                   dataType: dataType,
                   success: function (response) {
-                     if (transaction_to === "FD") 
+                     if (transaction_to === "FD" || transaction_to === "Bank Transfer") 
                      {
                         var resp = $.trim(response);
                         $("#showPay").html(resp);
-                     } else 
+                     } 
+                     else 
                      {
                         if (response.length === 0) 
                         {
@@ -595,7 +610,9 @@ if(isset($_POST['payasgn']))
                  "FD": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/fd_pay_assign/cr_fd_payassign.php",
                  "Collection": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/colctn_pay_assign/cr_col_payassign.php",
                  "GST": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/gst_pay_assign/cr_gst_payassign.php",
-                 "Withdraw": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/withdw_pay_assign/cr_withdrw_payassign.php"
+                 "Withdraw": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/withdw_pay_assign/cr_withdrw_payassign.php",
+                 "Bank Transfer": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/banktr_pay_assign/banktr_payassign.php"
+                 
                };
                const c_data = {
                  "Supplier": {bimpid:<?php echo $_GET['bimpid'];?>,trnsctyp:trnsctn_typ},
@@ -609,7 +626,8 @@ if(isset($_POST['payasgn']))
                  "FD": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
                  "Collection": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
                  "GST": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
-                 "Withdraw": {bimpid:<?php echo $_GET['bimpid'];?>}
+                 "Withdraw": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "Bank Transfer": {bimpid:<?php echo $_GET['bimpid'];?>}
                };
                if (!c_apiEndpoints[transaction_to]) {
                   alert("Transaction to/type not available or not implemented");
@@ -716,7 +734,7 @@ if(isset($_POST['payasgn']))
    }
    if(trnsctn_typ.toUpperCase()=='DEBIT')
     {
-        if (!request_num && trnscto !== "FD") {
+        if (!request_num && trnscto !== "FD" && trnscto !== "Bank Transfer") {
             alert("Please select request number");
             return false;
         }
@@ -801,6 +819,21 @@ if(isset($_POST['payasgn']))
                }
             }
          }
+         if (trnscto === "Bank Transfer") 
+         {
+            const bank_fields = [
+            { id: 'org_nm', name: 'Organization name'},
+            { id: 'bnkaccnt', name: 'Bank Allias Name'},
+            { id: 'bnktrn_remarks', name: 'Remarks'}
+            ];
+            for (let bank_field of bank_fields) {
+               let bank_value = document.getElementById(bank_field.id).value.trim();
+               if (!bank_value) {
+                  alert(`${bank_field.name} field is required!`);
+                  return false;
+               }
+            }
+         } 
          
         if (organ_fields[trnscto]) {
             var orgaField = document.getElementById(organ_fields[trnscto]);
@@ -1007,9 +1040,19 @@ if(isset($_POST['payasgn']))
             alert("Please select one of the rent details.");
             return false; // Prevent form submission
         }
+        // Extract the row index from selected radio button
+         let index = selected.value;
+         // Get the rate and paid amount fields
+         let rate = parseFloat(document.getElementById(`rate${index}`).value);
+         alert(rate);
+         if (paidamt !== rate) {
+            alert(`Paid amount must match the rate.`);
+            return false;
+         }
+
         return true;
       }
-      if (trnscto === "FD") 
+      else if (trnscto === "FD") 
       {
          const fd_fields = [
          { id: 'prjctnm', name: 'Project name'},
@@ -1025,7 +1068,7 @@ if(isset($_POST['payasgn']))
             }
          }
       }
-      if (trnscto === "Collection") 
+      else if (trnscto === "Collection") 
       {
          const col_fields = [
          { id: 'dbtr_typ', name: 'Debtor type'},
@@ -1047,7 +1090,7 @@ if(isset($_POST['payasgn']))
             }
          }
       } 
-      if (trnscto === "GST") 
+      else if (trnscto === "GST") 
       {
          const gst_fields = [
          { id: 'statenm', name: 'State name'},
@@ -1069,7 +1112,7 @@ if(isset($_POST['payasgn']))
             }
          }
       }   
-      if (trnscto === "Withdraw") 
+      else if (trnscto === "Withdraw") 
       {
          let with_value = document.getElementById('drwrnm').value.trim();
          if (!with_value) {
@@ -1077,6 +1120,21 @@ if(isset($_POST['payasgn']))
             return false;
          }
       }  
+      else if (trnscto === "Bank Transfer") 
+      {
+         const bank_fields = [
+         { id: 'org_nm', name: 'Organization name'},
+         { id: 'bnkaccnt', name: 'Bank Allias Name'},
+         { id: 'bnktrn_remarks', name: 'Remarks'}
+         ];
+         for (let bank_field of bank_fields) {
+            let bank_value = document.getElementById(bank_field.id).value.trim();
+            if (!bank_value) {
+               alert(`${bank_field.name} field is required!`);
+               return false;
+            }
+         }
+      } 
     }
     else
     {

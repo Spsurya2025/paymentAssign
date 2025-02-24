@@ -48,7 +48,7 @@
                         <td><input type="hidden" class="form-control client" name="client[<?php echo $i; ?>]" value="<?php echo $fetch->owner_id; ?>"><?php echo $ownerdet->companynm; ?></td>
                         <td><input type="hidden" class="form-control p_id" name="p_id[<?php echo $i; ?>]" id="p_id<?php echo $i; ?>" value="<?php echo $fetch->prj_id; ?>"><?php echo $prohect->pname; ?></td>
                         <td><input type="hidden" class="form-control sp_id" name="sp_id[<?php echo $i; ?>]" id="sp_id<?php echo $i; ?>" value="<?php echo $fetch->sp_id; ?>"><?php echo $subprohect->spname; ?></td>
-                        <td><input type="hidden" class="form-control rate" name="rate[<?php echo $i; ?>]" id="rate<?php echo $i; ?>" value="<?php echo $fetch->rate; ?>"><?php echo $fetch->rate;?></td>
+                        <td><input type="hidden" class="form-control rate" name="rate[<?php echo $i; ?>]" id="rate<?php echo $i; ?>" value="<?php echo (float)$fetch->rate; ?>"><?php echo $fetch->rate;?></td>
                     </tr>  
                         <?php $i++; } 
                 } else {
@@ -93,8 +93,8 @@
                 <td><input type="hidden" class="form-control rnt_pymnt_dt" name="rnt_pymnt_dt[<?php echo $i; ?>]" value="<?php echo $year."-".$month."-".$day;?>"  ><?php echo $day."-".$month."-".$year; ?></td>
                 <td><input type="hidden" class="form-control client" name="client[<?php echo $i; ?>]" value="<?php echo $fetch->owner_id;?>" ><?php echo $ownerdet->companynm; ?></td>
                 <td><input type="hidden" class="form-control p_id" name="p_id[<?php echo $i; ?>]" value="<?php echo $fetch->prj_id; ?>" ><?php echo $prohect->pname; ?></td>
-                <td><input type="hidden" class="form-control sp_id" name="sp_id[<?php echo $i; ?>]" value="<?php echo $fetch->sp_id; ?>" ><?php echo $subprohect->spname; ?></td>
-                <td><input type="hidden" class="form-control rate" name="rate[<?php echo $i; ?>]" value="<?php echo $fetch->rate; ?>" ><?php echo $fetch->rate;?></td>
+                <td><input type="hidden" class="form-control sp_id" name="sp_id[<?php echo $i; ?>]" id="sp_id<?php echo $i; ?>" value="<?php echo $fetch->sp_id; ?>" ><?php echo $subprohect->spname; ?></td>
+                <td><input type="hidden" class="form-control rate" name="rate[<?php echo $i; ?>]" id="rate<?php echo $i; ?>" value="<?php echo (float)$fetch->rate; ?>" ><?php echo $fetch->rate;?></td>
             </tr>
             <?php $i++; } 
                 }

@@ -16,20 +16,20 @@
   <div class="col-lg-12">
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="project">Year</label>
+        <label for="project">Year<span style="color:red">*</span></label>
         <select class="form-control year-select rentdetails" name="year" id="year">
         </select>
       </div>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="project">Month</label>
+        <label for="project">Month<span style="color:red">*</span></label>
         <select class="form-control month-select rentdetails" name="month" id="month">
         </select>
       </div>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
-      <label for="type">Type</label>
+      <label for="type">Type<span style="color:red">*</span></label>
       <select name="type" class="form-control rentdetails" id="type">
         <option value="">---Select---</option>
         <?php 
@@ -41,7 +41,7 @@
       </select>
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
-      <label for="purpose">Purpose</label>
+      <label for="purpose">Purpose<span style="color:red">*</span></label>
       <select name="purpose" class="form-control rentdetails" id="purpose">
         <option value="">---Select---</option>
         <?php 
@@ -100,7 +100,7 @@
         let selectedYear = parseInt(yearSelect.value);
         
         // If the selected year is the current year, limit to current month; otherwise, show all 12 months
-        let maxMonth = selectedYear === currentYear ? 12 : 12;
+        let maxMonth = selectedYear === currentYear ? currentMonth : 12;
         
         for (var i = 0; i < maxMonth; i++) {
             var option = new Option(months[i].name, months[i].value);
@@ -113,9 +113,9 @@
 
     // Update months when the year selection changes
     yearSelect.addEventListener("change", updateMonths);
-    // $("#year").change(function(){
-    //     updateMonths();
-    // });  
+    $("#year").change(function(){
+        updateMonths();
+    });  
 </script>
 <script>
   $(document).ready(function() {

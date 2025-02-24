@@ -28,7 +28,7 @@
   <div class="col-lg-12">
     <div class="col-lg-4 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="prjctnm">Project Name</label>
+        <label for="prjctnm">Project Name<span style="color:red">*</span></label>
         <select class="form-control" name="prj_name" id="prjctnm">
           <option value="">--- Select Project ---</option>
         <?php
@@ -42,7 +42,7 @@
     </div>
     <div class="col-lg-4 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="sbprjctnm">Sub Project Name</label>
+        <label for="sbprjctnm">Sub Project Name<span style="color:red">*</span></label>
         <select class="form-control" name="sprj_name" id="sbprjctnm">
           <option value="">--- Select Sub Project ---</option>
         </select>
@@ -50,13 +50,13 @@
     </div>
     <div class="col-lg-4 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="purpose">Purpose</label>
+        <label for="purpose">Purpose<span style="color:red">*</span></label>
         <input type="text" class="form-control" name="fdpurpose" id="purpose">
       </div>
     </div>
     <div class="col-lg-12 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="message">Message</label>
+        <label for="message">Message<span style="color:red">*</span></label>
         <textarea name="fdmessage" id="message" class="form-control"></textarea>
       </div>
     </div>
