@@ -10,7 +10,6 @@ if(isset($_POST['payasgn']))
    $msg = '';
    $bnkimprt_id = $_GET['bimpid'];
    $acc_id = $_GET['accid'];
-   $preqnum = mysqli_real_escape_string($con, $_POST['preqnum']);
    $statement_id = mysqli_real_escape_string($con, $_POST['stmnt_prvw']);
    $bankacc_id = mysqli_real_escape_string($con, $_POST['bankacc_id']);
    $trnsc_type = mysqli_real_escape_string($con, $_POST['trnsc_type']);
@@ -18,10 +17,85 @@ if(isset($_POST['payasgn']))
    $trnscto = mysqli_real_escape_string($con, $_POST['trnscto']);
    $payee_nm = mysqli_real_escape_string($con, $_POST['payee_nm']);
    $paid_amnt = mysqli_real_escape_string($con, $_POST['paidamt']);
+   if (strtoupper($trnsc_type) == 'DEBIT' && $trnscto == "Others")
+   {
+      $preqnum = mysqli_real_escape_string($con, $_POST['oth_req_num']);
+   } 
+   else{
+      $preqnum = mysqli_real_escape_string($con, $_POST['preqnum']);
+   }
    $created_on = date('Y-m-d H:i:s');
+   $banimpt_id = mysqli_query($con,"SELECT id FROM fin_payment_entry WHERE bnkimprt_id = '$bnkimprt_id'");
    $sql = "SELECT * FROM fin_payment_entry WHERE preqnum = '$preqnum'";
    $result = $con->query($sql);
-   if (strtoupper($trnsc_type) == 'DEBIT' && $trnscto != "FD" && $trnscto != "Bank Transfer"  && $result->num_rows > 0) 
+   $chequedetails = mysqli_query($con, "SELECT y.*,y.id FROM `chqissueentry` y JOIN chq_rqentry x ON y.reqno=x.id WHERE y.status = '1' AND x.chquniqnm = '".$preqnum."'");
+   $requnum_count_details = mysqli_num_rows($chequedetails);
+   // backend validation for dd payment assign
+   $ddno = mysqli_real_escape_string($con, $_POST['ddno']);
+   $dd_num = mysqli_query($con, "SELECT x.*,y.dd_no FROM fin_payment_entry_dd x JOIN fin_ddtls y ON x.ddno = y.id WHERE x.ddno = '$ddno'");
+   $dd_count = mysqli_num_rows($dd_num);
+   // end dd
+   //backend validation for fd payment assign
+   $fdno = mysqli_real_escape_string($con, $_POST['fdno']);
+   $fd_num = mysqli_query($con, "SELECT x.*,y.fd_no FROM fin_payment_entry_fd x JOIN fin_fddtls y ON x.fdno = y.id WHERE x.fdno = '$fdno'");
+   $fd_count = mysqli_num_rows($fd_num);
+
+   // end fd
+   // supplier backend validation
+   if (strtoupper($trnsc_type) == 'DEBIT' && $trnscto == "Supplier") {
+      $duplicate_found = 0;
+      // Validate PR Data
+      if (!empty($_POST['pr_data'])) {
+         foreach ($_POST['pr_data'] as $id) {
+            $req_num_sup = mysqli_real_escape_string($con, $_POST['req_num_sup'][$id]);
+            $check_query = mysqli_query($con, "SELECT id FROM fin_payment_entry_supplier WHERE req_num = '$req_num_sup'");
+            if (mysqli_num_rows($check_query) > 0) {
+               echo "<script>alert('Request number $req_num_sup already assigned.');</script>";
+               $duplicate_found++;
+            }
+         }
+      }
+      // Validate Transfer Data
+      if (!empty($_POST['tr_data'])) {
+         foreach ($_POST['tr_data'] as $id) {
+            $req_num_sup_tr = mysqli_real_escape_string($con, $_POST['req_num_sup_tr'][$id]);
+            $check_query = mysqli_query($con, "SELECT id FROM fin_payment_entry_supplier WHERE req_num = '$req_num_sup_tr'");
+            if (mysqli_num_rows($check_query) > 0) {
+               echo "<script>alert('Request number $req_num_sup_tr already assigned.');</script>";
+               $duplicate_found++;
+            }
+         }
+      }
+      // Exit only if any duplicate found
+      if ($duplicate_found > 0) {
+          echo "<script>window.history.go(-1);</script>";
+          exit;
+      }
+   }
+   // end supplier
+   if(mysqli_num_rows($banimpt_id)>0){
+      echo "<script>alert('Already assigned');</script>";
+      echo "<script>window.history.go(-1);</script>";
+   }
+   else if(strtoupper($trnsc_type) == 'DEBIT' && $trnscto == "FD" && $fd_count > 0)
+   {
+      $fd_fh = mysqli_fetch_object($fd_num);
+      $fd_n = $fd_fh->fd_no;
+      echo "<script>alert('Payment request already entered for FD number: $fd_n');</script>";
+      echo "<script>window.history.go(-1);</script>";
+   }
+   else if(strtoupper($trnsc_type) == 'DEBIT' && $trnscto == "DD" && $dd_count > 0)
+   {
+      $dd_fh = mysqli_fetch_object($dd_num);
+      $dd_n = $dd_fh->dd_no;
+      echo "<script>alert('Payment request already entered for DD number: $dd_n');</script>";
+      echo "<script>window.history.go(-1);</script>";
+   }
+   else if(strtoupper($trnsc_type) == 'DEBIT' && $trnscto == "Cheque" && $result->num_rows == $requnum_count_details){
+      echo "<script>alert('Payment request already entered');</script>";
+      echo "<script>window.history.go(-1);</script>";
+   }
+   else if (strtoupper($trnsc_type) == 'DEBIT' && $trnscto != "FD" && $trnscto != "Supplier" && $trnscto != "DD" && $trnscto != "Bank Transfer" && $trnscto != "Others" && $trnscto != "Cheque"  && $result->num_rows > 0) 
    {       
       echo "<script>alert('Payment request number: $preqnum already exists!');</script>";
       echo "<script>window.history.go(-1);</script>";
@@ -45,7 +119,9 @@ if(isset($_POST['payasgn']))
             $wrk_dscrptn = mysqli_real_escape_string($con, $_POST['wrk_dscrptn']);
             $subprjct_val = mysqli_real_escape_string($con, $_POST['subprjct_val']);
             $req_amt = mysqli_real_escape_string($con, $_POST['req_amt_v']);
-            $vndrinqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_vendor` (`payent_id`, `pay_rqst_id`, `vndrnm`, `prjct_name`, `jobodr_num`, `jobodr_val`, `subprjct_nm`, `bmsnm`, `wrk_dscrptn`, `subprjct_val`, `rqst_amt`, `paid_amnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$vndrnm', '$prjct_name', '$jobodr_num', '$jobodr_val', '$subprjct_nm', '$bmsnm', '$wrk_dscrptn', '$subprjct_val', '$req_amt', '$paid_amnt', '1')");
+            $othr_re = mysqli_real_escape_string($con, $_POST['other_reason']);
+            $othr_amt = mysqli_real_escape_string($con, $_POST['other_amt']);
+            $vndrinqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_vendor` (`payent_id`, `pay_rqst_id`, `vndrnm`, `prjct_name`, `jobodr_num`, `jobodr_val`, `subprjct_nm`, `bmsnm`, `wrk_dscrptn`, `subprjct_val`,`other_charges_id`,`other_charge_amt`,`rqst_amt`, `paid_amnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$vndrnm', '$prjct_name', '$jobodr_num', '$jobodr_val', '$subprjct_nm', '$bmsnm', '$wrk_dscrptn', '$subprjct_val','$othr_re','$othr_amt', '$req_amt', '$paid_amnt', '1')");
             if($vndrinqr)
             {
                echo "<script>alert('Vendor payment assign details successfully inserted')</script>";
@@ -59,52 +135,72 @@ if(isset($_POST['payasgn']))
             $podate = mysqli_real_escape_string($con, $_POST['podate']);
             $poamnt = mysqli_real_escape_string($con, $_POST['poamnt']);
             $spreq_typ = mysqli_real_escape_string($con, $_POST['spreq_typ']);
+            $othr_re = mysqli_real_escape_string($con, $_POST['other_reason']);
+            $othr_amt = mysqli_real_escape_string($con, $_POST['other_amt']);
             if (!empty($_POST['pr_data'])) {
                foreach ($_POST['pr_data'] as $id) {
                   $pr_numbr = mysqli_real_escape_string($con, $_POST['pr_numbr'][$id]);
                   $subprj_nm = mysqli_real_escape_string($con, $_POST['subprj_nm'][$id]);
+                  $req_num_sup = mysqli_real_escape_string($con, $_POST['req_num_sup'][$id]);
                   $subpr_id = mysqli_real_escape_string($con, $_POST['subprj_id'][$id]);
                   $bms_name = mysqli_real_escape_string($con, $_POST['bms_name'][$id]);
                   $pramnt = mysqli_real_escape_string($con, $_POST['pramnt'][$id]);
                   $pr_request_amt = mysqli_real_escape_string($con, $_POST['pr_reqamt'][$id]);
                   $trnsrsn = '';
                   $pr_paid_amnt = $paid_amnt;
-                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`,`subprjid`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm','$subpr_id','$bms_name', '$pramnt', '$pr_request_amt', '$pr_paid_amnt', '$trnsrsn', '0', '$trns_paid_amnt', '1','$pr_request_amt','$pr_paid_amnt')"); 
-                  if($splrqr)
-                  {
-                     echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
-                  }  
+                  $trns_paid_amnt = '';
+                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `req_num`,`suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`,`subprjid`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`,`other_charges_id`,`other_charge_amt`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$req_num_sup', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm','$subpr_id','$bms_name', '$pramnt', '$pr_request_amt', '$pr_request_amt', '$trnsrsn', '0', '$trns_paid_amnt', '1','','','$pr_request_amt','$pr_paid_amnt')");  
                }
 
             }
-            else if(!empty($_POST['tr_data']))
+            if(!empty($_POST['tr_data']))
             {
                foreach($_POST['tr_data'] as $id)
                {
                   $pr_numbr = '';
                   $subprj_nm = '';
+                  $req_num_sup_tr = mysqli_real_escape_string($con, $_POST['req_num_sup_tr'][$id]);
                   $subpr_id = '';
                   $bms_name = '';
                   $pramnt = '';
                   $trnsrsn = mysqli_real_escape_string($con, $_POST['trnsrsn'][$id]);
                   $trns_rqst_amt = mysqli_real_escape_string($con, $_POST['trreqamt'][$id]);
                   $trns_paid_amnt = $paid_amnt;
-                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`,`subprjid`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$subpr_id','$bms_name', '$pramnt', '0', '$pr_paid_amnt', '$trnsrsn', '$trns_rqst_amt', '$trns_paid_amnt', '1','$trns_rqst_amt','$trns_paid_amnt')");
-                  if($splrqr)
-                  {
-                     echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
-                  } 
+                  $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `req_num`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`,`subprjid`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`,`other_charges_id`,`other_charge_amt`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$req_num_sup_tr','$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '$pr_numbr', '$subprj_nm', '$subpr_id','$bms_name', '$pramnt', '', '', '$trnsrsn', '$trns_rqst_amt', '$trns_rqst_amt', '1','','','$trns_rqst_amt','$trns_paid_amnt')");
                }
             }
-            else
-            { 
-                $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `subprjid`,`bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '0', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '','', '', '0', '0', '', '', '', '1','$paid_amnt','$paid_amnt')");
-                if($splrqr)
-                {
-                    echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
-                } 
+            if($othr_re != ''){
+               $otherchrages = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`, `subprjid`,`bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`,`other_charges_id`,`other_charge_amt`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '$pay_request_id', '$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '','', '', '0', '0', '', '', '', '1','$othr_re','$othr_amt','$othr_amt','$paid_amnt')");
             }
+            if(empty($_POST['pr_data']) && empty($_POST['tr_data'])){
+               $splrqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_supplier` (`payent_id`, `pay_rqst_id`, `req_num`, `suplrnm`, `prj_name`, `ponum`, `podate`, `poamnt`, `pr_numbr`, `subprj_nm`,`subprjid`, `bms_name`, `pramnt`, `pr_request_amt`, `pr_paid_amnt`, `trnsrsn`, `trns_rqst_amt`, `trns_paid_amnt`, `status`,`other_charges_id`,`other_charge_amt`, `request_amount`, `paid_amount`) VALUES ('$pentry_last_id', '', '','$suplrnm', '$prj_name', '$ponum', '$podate', '$poamnt', '', '', '','', '', '', '', '', '', '', '1','','','$paid_amnt','$paid_amnt')");
+            }
+            echo "<script>alert('Supplier payment assign details successfully inserted')</script>";
+
          } 
+         else if ($trnscto == "Others") 
+         { 
+            $othrhead = mysqli_real_escape_string($con, $_POST['othrhead']);
+            $linkedwith = mysqli_real_escape_string($con, $_POST['linkedwith']);
+            $othr_re = mysqli_real_escape_string($con, $_POST['other_reason']);
+            $othr_amt = mysqli_real_escape_string($con, $_POST['other_amt']);
+            if($linkedwith== 'Indivisual'){
+               $prjnm = mysqli_real_escape_string($con, $_POST['prjnm']);
+               $subprjnm = mysqli_real_escape_string($con, $_POST['subprjnm']);
+            }
+            else{
+               $prjnm = mysqli_real_escape_string($con, $_POST['prjnm_req_num']);
+               $subprjnm = mysqli_real_escape_string($con, $_POST['subprjnm_req_num']); 
+            }
+            $paytcr = mysqli_real_escape_string($con, $_POST['paytcr']);
+            $oth_req_num = mysqli_real_escape_string($con, $_POST['oth_req_num']);
+            $requested_amt = mysqli_real_escape_string($con, $_POST['requested_amt']);
+            $otheren = mysqli_query($con, "INSERT INTO `fin_payment_entry_others` (`payent_id`, `pay_rqst_id`, `othrhd`, `prj_name`, `sprj_name`, `particlr`,`other_charges_id`,`other_charge_amt`, `othr_req_amt`, `paid_othr_amt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$othrhead', '$prjnm', '$subprjnm', '$paytcr','$othr_re','$othr_amt', '$requested_amt','$paid_amnt','1')");
+            if($otheren)
+            {
+               echo "<script>alert('Others payment assign details successfully inserted')</script>";
+            }
+         }
          else if ($trnscto == "Operator")
          {
             $op_py_req_amt = mysqli_real_escape_string($con, $_POST['op_req_amt']);
@@ -142,7 +238,9 @@ if(isset($_POST['payasgn']))
             $adv_amt = mysqli_real_escape_string($con, $_POST['adv_amt']);
             $final_amnt = mysqli_real_escape_string($con, $_POST['final_amnt']);
             $trnsp_req_amt = mysqli_real_escape_string($con, $_POST['trnsp_req_amt']);
-            $trnsptqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_transporter` (`payent_id`, `pay_rqst_id`, `trnsprtrnm`, `prjctnm`, `subprjnm`, `bmsnm`, `ponum`, `place_from`, `place_to`, `distance`, `material_nm`, `mtrl_weight`, `service_typ`, `lry_model`, `dala_typ`, `carrycap`, `totalamnt`, `rateper_km`, `rateper_kg`, `adv_prcnt`, `adv_amt`, `final_amnt`, `trns_req_amt`, `paidamnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$trnsprtrnm', '$prjctnm', '$subprjnm', '$bmsnm', '$ponum', '$place_from', '$place_to', '$distance', '$material_nm', '$mtrl_weight', '$service_typ', '$lry_model', '$dala_typ', '$carrycap', '$totalamnt', '$rateper_km', '$rateper_kg', '$adv_prcnt', '$adv_amt', '$final_amnt', '$trnsp_req_amt', '$paid_amnt', '1')");
+            $othr_re = mysqli_real_escape_string($con, $_POST['other_reason']);
+            $othr_amt = mysqli_real_escape_string($con, $_POST['other_amt']);
+            $trnsptqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_transporter` (`payent_id`, `pay_rqst_id`, `trnsprtrnm`, `prjctnm`, `subprjnm`, `bmsnm`, `ponum`, `place_from`, `place_to`, `distance`, `material_nm`, `mtrl_weight`, `service_typ`, `lry_model`, `dala_typ`, `carrycap`, `totalamnt`, `rateper_km`, `rateper_kg`, `adv_prcnt`, `adv_amt`, `final_amnt`,`other_charges_id`,`other_charge_amt`, `trns_req_amt`, `paidamnt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$trnsprtrnm', '$prjctnm', '$subprjnm', '$bmsnm', '$ponum', '$place_from', '$place_to', '$distance', '$material_nm', '$mtrl_weight', '$service_typ', '$lry_model', '$dala_typ', '$carrycap', '$totalamnt', '$rateper_km', '$rateper_kg', '$adv_prcnt', '$adv_amt', '$final_amnt','$othr_re','$othr_amt', '$trnsp_req_amt', '$paid_amnt', '1')");
             if($trnsptqr)
             {
                echo "<script>alert('Transporter payment assign details successfully inserted')</script>";
@@ -181,19 +279,6 @@ if(isset($_POST['payasgn']))
             if($expenen)
             {
                echo "<script>alert('Expense payment assign details successfully inserted')</script>";
-            }
-         }
-         else if ($trnscto == "Others") 
-         { 
-            $othrhead = mysqli_real_escape_string($con, $_POST['othrhead']);
-            $prjnm = mysqli_real_escape_string($con, $_POST['prjnm']);
-            $subprjnm = mysqli_real_escape_string($con, $_POST['subprjnm']);
-            $paytcr = mysqli_real_escape_string($con, $_POST['paytcr']);
-            $requested_amt = mysqli_real_escape_string($con, $_POST['requested_amt']);
-            $otheren = mysqli_query($con, "INSERT INTO `fin_payment_entry_others` (`payent_id`, `pay_rqst_id`, `othrhd`, `prj_name`, `sprj_name`, `particlr`, `othr_req_amt`, `paid_othr_amt`, `status`) VALUES ('$pentry_last_id', '$pay_request_id', '$othrhead', '$prjnm', '$subprjnm', '$paytcr', '$requested_amt','$paid_amnt','1')");
-            if($otheren)
-            {
-               echo "<script>alert('Others payment assign details successfully inserted')</script>";
             }
          }
          else if ($trnscto == "Rent") 
@@ -267,11 +352,13 @@ if(isset($_POST['payasgn']))
          { // If Transaction Type is 'Collection'
             $debtor_typ = mysqli_real_escape_string($con, $_POST['debtor_typ']);
             $clientnm = mysqli_real_escape_string($con, $_POST['clientnm']);
+            $transaction_for = mysqli_real_escape_string($con, $_POST['transaction_for']);
+            $unit_nmid = mysqli_real_escape_string($con, $_POST['unit_nmid']);
             $prj_name = mysqli_real_escape_string($con, $_POST['prj_name']);
             $sbprjctnm = mysqli_real_escape_string($con, $_POST['sbprjctnm']);
             $col_requested_amt = mysqli_real_escape_string($con, $_POST['col_requested_amt']);
             $remark = mysqli_real_escape_string($con, $_POST['remark']);
-            $colldqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_collection` (`payent_id`, `pay_rqst_id`, `debtor_typ`, `clientnm`,`prj_name`, `sprj_name`, `col_req_amt`, `paid_col_amt`,`remarks`,`status`) VALUES ('$pentry_last_id', '$pay_request_id', '$debtor_typ', '$clientnm','$prj_name','$sbprjctnm','$col_requested_amt', '$paid_amnt','$remark', '1')");
+            $colldqr = mysqli_query($con, "INSERT INTO `fin_payment_entry_collection` (`payent_id`, `pay_rqst_id`, `debtor_typ`, `clientnm`, `transaction_for`, `unit_nmid`, `prj_id`, `subprj_id`, `col_req_amt`, `paid_col_amt`,`remarks`,`status`, `created_date`) VALUES ('$pentry_last_id', '$pay_request_id', '$debtor_typ', '$clientnm', '$transaction_for', '$unit_nmid', '$prj_name','$sbprjctnm','$col_requested_amt', '$paid_amnt','$remark', '1', '$created_on')");
             if($colldqr)
             {
                echo "<script>alert('Collection payment assign details successfully inserted')</script>";
@@ -311,7 +398,89 @@ if(isset($_POST['payasgn']))
             {
                echo "<script>alert('Bank transfer payment assign details successfully inserted')</script>";
             }
-          }
+         }
+         else if ($trnscto == "Cheque") 
+         { // If Transaction Type is 'Cheque'
+            $chqno = mysqli_real_escape_string($con, $_POST['chqno']);
+            $chqpurpose = mysqli_real_escape_string($con, $_POST['chqpurpose']);
+            $chqclient = mysqli_real_escape_string($con, $_POST['chqclient']);
+            $chqmessage = mysqli_real_escape_string($con, $_POST['chqmessage']);
+            $chq_rqst_amt = mysqli_real_escape_string($con, $_POST['chq_rqst_amt']);
+            $req_by = mysqli_real_escape_string($con, $_POST['req_by']);
+            $payrqstid = mysqli_real_escape_string($con, $_POST['payrqstid']);
+      
+            $empsqchq = mysqli_query($con, "INSERT INTO `fin_payment_entry_chq` (`payent_id`, `pay_rqst_id`, `req_no`, `req_by`, `empcode`, `chqno`, `purpose`, `chqclient`, `chqmessage`, `chq_rqst_amt`, `paid_amnt`, `status`) VALUES ('$pentry_last_id', '$payrqstid', '$preqnum', '$req_by', '', '$chqno', '$chqpurpose', '$chqclient', '$chqmessage', '$chq_rqst_amt', '$paid_amnt', '1')");
+            if($empsqchq)
+            {
+               echo "<script>alert('Cheque payment assign details successfully inserted')</script>";
+            }
+         }
+         else if ($trnscto == "Asset Finance") 
+         { // If Transaction Type is 'Asset Finance'
+            $benif_acc = mysqli_real_escape_string($con, $_POST['benif_acc']);
+            $af_message = mysqli_real_escape_string($con, $_POST['af_message']);
+            $af_req_id = mysqli_real_escape_string($con, $_POST['af_req_id']);
+            $af_purpose = mysqli_real_escape_string($con, $_POST['af_purpose']);
+            $af_request_amount = mysqli_real_escape_string($con, $_POST['af_request_amount']);
+            $af_finalid = $preqnum;           
+            $prj_id = mysqli_real_escape_string($con, $_POST['prj_name']);
+            $sprj_id = mysqli_real_escape_string($con, $_POST['sbprjctnm']);
+            $assetfiquery = mysqli_query($con, "INSERT INTO `fin_payment_entry_asset_fin` (`payent_id`, `af_req_id`, `name_id`, `afl_amount`, `purpose`, `message`, `astfinl_id`,`prj_id`,`sprj_id`,`status`) VALUES ('$pentry_last_id', '$af_req_id', '$benif_acc', '$paid_amnt', '$af_purpose', '$af_message', '$af_finalid','$prj_id','$sprj_id','1')");
+            if($assetfiquery)
+            {
+               echo "<script>alert('Asset finance payment assign details successfully inserted')</script>"; 
+            }
+         }
+         else if ($trnscto == "DD") 
+         { // If Transaction Type is 'DD'
+            $ddno = mysqli_real_escape_string($con, $_POST['ddno']);
+            $ddpurpose = mysqli_real_escape_string($con, $_POST['ddpurpose']);
+            $ddexprsn = mysqli_real_escape_string($con, $_POST['ddexprsn']);
+            $ddbenificiary = mysqli_real_escape_string($con, $_POST['ddbenificiary']);
+            $ddprjname = mysqli_real_escape_string($con, $_POST['prj_name']);
+            $ddsubprjname = mysqli_real_escape_string($con, $_POST['sprj_name']);
+            $ddmessage = mysqli_real_escape_string($con, $_POST['ddmessage']);
+            $ddreqamt = mysqli_real_escape_string($con, $_POST['dd_rqst_amt']);
+            $ddothid = mysqli_real_escape_string($con, $_POST['other_reason']);
+            $ddothamt = mysqli_real_escape_string($con, $_POST['other_amt']);
+            $ddentryqry = mysqli_query($con, "INSERT INTO `fin_payment_entry_dd` (`payent_id`, `pay_rqst_id`, `req_no`, `req_by`, `empcode`, `ddno`, `prj_id`, `sprj_id`, `purpose`, `exprsn`, `benificiary`, `dd_message`, `dd_rqst_amt`, `other_charges_id`, `other_charge_amt`, `paid_amnt`, `status`) VALUES ('$pentry_last_id', '0', '', '', '', '$ddno','$ddprjname','$ddsubprjname', '$ddpurpose', '$ddexprsn', '$ddbenificiary', '$ddmessage', '$ddreqamt','$ddothid','$ddothamt', '$paid_amnt', '1')");
+            if($ddentryqry)
+            {
+               echo "<script>alert('DD payment assign details successfully inserted')</script>"; 
+            }
+         }
+         else if ($trnscto == "Loan Assignment") { // If Transaction Type is 'Loan Assignment'
+            $typeid = mysqli_real_escape_string($con, $_POST['typeid']);
+            $loanid = mysqli_real_escape_string($con, $_POST['refno']);
+            $account_no =  mysqli_real_escape_string($con, $_POST['account_no']);
+            $nbfc_name = mysqli_real_escape_string($con, $_POST['nbfcname']);
+        
+            $other_crg_emi = mysqli_real_escape_string($con, $_POST['other_crg_emi']);
+            $other_amt_emi = mysqli_real_escape_string($con, $_POST['other_amt_emi']);
+            $total_amt = mysqli_real_escape_string($con, $_POST['total_amt']);
+            $chkeminumb = count($_POST['chkemi']);
+              for($i=0; $i<$chkeminumb; $i++)  
+              {  
+                $chkemi = $_POST['chkemi'][$i];
+                $prexpld = explode("/", $chkemi);
+                $loan_id = $prexpld[0];
+                $emi_dt = $prexpld[1];
+                $emi_amt = $prexpld[2];
+                $emi_interest = $prexpld[3];
+                $emi_principal = $prexpld[4];
+                $emi_total = $prexpld[5];
+                $emi_outstanding = $prexpld[6];
+        
+                $emi_entry = mysqli_query($con,"INSERT INTO `fin_payment_entry_term_loan`(`payent_id`,`acc_no`,`loan_id`,`emi_dt`,`emi_amt`,`emi_interest`,`emi_principal`,`emi_total`,`emi_outstanding`, `paid_status`,`paid_dt`) VALUES ('$pentry_last_id','$account_no','$loan_id','$emi_dt', '$emi_amt', '$emi_interest', '$emi_principal', '$emi_total', '$emi_outstanding','1','$created_on')");
+                if(!$emi_entry){
+
+                }
+              } 
+              $oth_entry = mysqli_query($con,"INSERT INTO `fin_payment_entry_term_loan_oth`(`payent_id`,`loan_id`,`pay_type`,`tot_amt`,`oth_char`,`othr_amt`) VALUES ('$pentry_last_id','$loanid','EMI','$total_amt','$other_crg_emi','$other_amt_emi')");
+        
+              
+              echo "<script>alert('Term loan details successfully inserted')</script>"; 
+         }
         echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
       } 
       else 
@@ -321,14 +490,13 @@ if(isset($_POST['payasgn']))
    }
 }    
 ?>
-<title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Auto Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Manual Payment Assignment"; } ?> : Suryam Group</title>
+<title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Update Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Add Payment Assignment"; } ?> : Suryam Group</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
 <style>
    .form-control.selectize-control {
       height: 28px !important;
    }
-
 </style>
 <script>
    $(document).ready(function () {
@@ -384,9 +552,52 @@ if(isset($_POST['payasgn']))
                </div>
                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
                   <div class="form-group">
-                     <label for="preqnum">Payment Request No.</label>
-                     <select class="form-control" name="preqnum" id="request_num" <?php echo (strtoupper($fthimps->transac_type) == 'CREDIT')? 'disabled' : ''?>>
-                        <option value="">---Select payment Request no.---</option>
+                     <label for="trnscto">Transaction To/Type</label>
+                     <select class="form-control" name="trnscto" id="trnscto">
+                     <?php
+                           if (strtoupper($fthimps->transac_type) == 'DEBIT') {?>
+                             <option value="">--- Select Transaction To/Type ---</option>
+                        <option value="Supplier">Supplier</option>
+                        <option value="Vendor">Vendor</option>
+                        <option value="Transporter">Transporter</option>
+                        <option value="Expense">Expense</option>
+                        <option value="Operator">Operator Payment</option>
+                        <option value="Salary Processing">Salary Processing</option>
+                        <option value="Others">Others</option>
+                        <option value="Collection">Collection</option>
+                        <option value="Rent">Rent</option>
+                        <option value="FD">FD</option>
+                        <option value="GST">GST</option>
+                        <option value="Withdraw">Withdraw</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="Asset Finance">Asset Finance</option>
+                        <option value="DD">DD</option>
+                        <option value="Loan Assignment">Loan Assignment</option>
+                        <!--<option value="Salary Advance">Salary Advance</option>-->
+                        <!--<option value="Loan Advance">Employee Loan Advance</option>-->
+                        <!--<option value="LC Processing">LC Processing</option>-->
+                           <?php } 
+                           else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
+                           <option value="">--- Select Transaction To/Type ---</option>
+                           <option value="Supplier">Supplier</option>
+                           <option value="Vendor">Vendor</option>
+                           <option value="Expense">Expense</option>
+                           <option value="Operator">Operator Payment</option>
+                           <option value="Transporter">Transporter</option>
+                           <option value="Salary Processing">Salary Processing</option>
+                           <option value="Others">Others</option>
+                           <option value="Collection">Collection</option>
+                           <option value="GST">GST</option>
+                           <option value="Withdraw">Withdraw</option>
+                           <option value="Rent">Rent</option>
+                           <option value="FD">FD</option>
+                           <option value="DD">DD</option>
+                           <option value="Bank Transfer">Bank Transfer</option>
+                           <option value="Asset Finance">Asset Finance</option>
+                        <?php } else { ?>
+                           <option value="">--- Select Transaction To/Type ---</option>
+                           <?php } ?>
                      </select>
                   </div>
                </div>
@@ -429,64 +640,17 @@ if(isset($_POST['payasgn']))
                </div>
                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
                   <div class="form-group">
-                     <label for="trnscto">Transaction To/Type</label>
-                     <select class="form-control" name="trnscto" id="trnscto">
-                     <?php
-                           if (strtoupper($fthimps->transac_type) == 'DEBIT') {?>
-                             <option value="">--- Select Transaction To/Type ---</option>
-                        <option value="Supplier">Supplier</option>
-                        <option value="Vendor">Vendor</option>
-                        <option value="Transporter">Transporter</option>
-                        <option value="Expense">Expense</option>
-                        <option value="Salary Processing">Salary Processing</option>
-                        <option value="Operator">Operator Payment</option>
-                        <option value="Others">Others</option>
-                        <option value="Rent">Rent</option>
-                        <option value="FD">FD</option>
-                        <option value="Collection">Collection</option>
-                        <option value="GST">GST</option>
-                        <option value="Withdraw">Withdraw</option>
-                        <option value="Bank Transfer">Bank Transfer</option>
-                           <?php } 
-                           else if(strtoupper($fthimps->transac_type) == 'CREDIT'){ ?>
-                           <option value="">--- Select Transaction To/Type ---</option>
-                           <option value="Supplier">Supplier</option>
-                           <option value="Vendor">Vendor</option>
-                           <option value="Transporter">Transporter</option>
-                           <option value="Expense">Expense</option>
-                           <option value="Salary Processing">Salary Processing</option>
-                           <option value="Operator">Operator Payment</option>
-                           <option value="Others">Others</option>
-                           <option value="Rent">Rent</option>
-                           <option value="FD">FD</option>
-                           <option value="Collection">Collection</option>
-                           <option value="GST">GST</option>
-                           <option value="Withdraw">Withdraw</option>
-                           <option value="Bank Transfer">Bank Transfer</option>
-                        <?php } else { ?>
-                           <option value="">--- Select Transaction To/Type ---</option>
-                           <?php } ?>
+                     <label for="preqnum">Payment Request No.</label>
+                     <select class="form-control" name="preqnum1" id="request_num" <?php echo (strtoupper($fthimps->transac_type) == 'CREDIT')? 'disabled' : ''?>>
+                        <option value="">---Select payment Request no.---</option>
                      </select>
                   </div>
                </div>
                <input type="hidden" id="payment_req_id">
-
                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
                   <div class="form-group">
                      <label for="payee_nm">Payee Name</label>
                      <input type="text" class="form-control" name="payee_nm" id="payee_nm" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->payee_name; } ?>" readonly>
-                  </div>
-               </div>
-               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
-                  <div class="form-group">
-                     <label for="bank_trans_date">Transaction date</label>
-                     <input type="text" class="form-control" name="bank_trans_date" id="bank_trans_date" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->transac_dt; } ?>" readonly>
-                  </div>
-               </div>
-               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
-                  <div class="form-group">
-                     <label for="bank_ref">Reference</label>
-                     <input type="text" class="form-control" name="bank_ref" id="bank_ref" value="<?php if (isset($_GET['bimpid'])) { echo $fthimps->reference; } ?>" readonly>
                   </div>
                </div>
                <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
@@ -498,26 +662,20 @@ if(isset($_POST['payasgn']))
                      </div>
                   </div>
                </div>
-               <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
-                  <div class="form-group">
-                     <label for="bank_desc">Description</label>
-                     <textarea name="" class="form-control" name="bank_desc" id="bank_desc" readonly><?php if (isset($_GET['bimpid'])) { echo $fthimps->dscrptn; } ?></textarea>
-                  </div>
-               </div>
             </div>
             <div id="showPay">
             </div>
             <?php if($fthimps->is_pay_aprvd == '0') { ?>
-               <div class="row">
-                  <div class="col-lg-12">
-                     <div class="form-group">
-                        <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
-                           <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" >
-                        </div>
+            <div class="row">
+               <div class="col-lg-12">
+                  <div class="form-group">
+                     <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
+                        <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" >
                      </div>
                   </div>
                </div>
-            <?php } ?>
+            </div>
+            <?php }?>
          </fieldset>
       </form>
       <!-- //Body Ends Here -->     
@@ -550,21 +708,25 @@ if(isset($_POST['payasgn']))
                "Operator": "operator_pay_assign/get_opr.php",
                "Transporter": "transporter_pay_assign/get_tr.php",
                "Salary Processing": "salary_pay_assign/get_sal.php",
+               "Others": "other_pay_assign/others_payasn.php",
                "Expense": "exp_pay_assign/get_exp.php",
-               "Others": "other_pay_assign/get_oth.php",
                "Rent": "rent_pay_assign/get_rent.php",
                "FD": "fd_pay_assign/fd_payassign.php",
-               "Collection": "colctn_pay_assign/get_col.php",
                "GST": "gst_pay_assign/get_gst.php",
                "Withdraw": "withdw_pay_assign/get_with.php",
-               "Bank Transfer": "banktr_pay_assign/banktr_payassign.php"
+               "Collection": "colctn_pay_assign/get_col.php",
+               "Bank Transfer": "banktr_pay_assign/banktr_payassign.php",
+               "Cheque": "cheque_pay_assign/che_exp.php",
+               "Asset Finance": "asset_finance/get_req.php",
+               "DD": "dd_pay_assign/dd_payassign.php",
+               "Loan Assignment": "loanass_pay_assign/get_loan.php"
                };
 
                // Check if transaction_to exists in mapping
                if (!apiEndpoints[transaction_to]) {
                return;
                }
-               let dataType = transaction_to === "FD" || transaction_to === "Bank Transfer"  ? "html" : "json";
+               let dataType = transaction_to === "FD" || transaction_to === "DD" || transaction_to === "Bank Transfer" || transaction_to === "Others"  ? "html" : "json";
                // Fetch data dynamically
                $.ajax({
                   url: apiEndpoints[transaction_to],
@@ -572,17 +734,15 @@ if(isset($_POST['payasgn']))
                   type: 'GET',
                   dataType: dataType,
                   success: function (response) {
-                     if (transaction_to === "FD" || transaction_to === "Bank Transfer") 
+                    if (transaction_to === "FD" || transaction_to === "DD" || transaction_to === "Bank Transfer" || transaction_to === "Others") 
                      {
                         var resp = $.trim(response);
                         $("#showPay").html(resp);
-                     } 
-                     else 
+                     } else 
                      {
                         if (response.length === 0) 
                         {
                            alert('No data available');
-                           $("#payasgn").prop("disabled", false); // Enable submit button after success
                            return;
                         }
                         
@@ -592,7 +752,7 @@ if(isset($_POST['payasgn']))
                   },
                   error: function () {
                         alert('Failed to fetch data');
-                        $("#payasgn").prop("disabled", false); // Enable submit button after success
+                        $("#payasgn").prop("disabled", true); // Disable submit button after fail
                   }
                });
             }
@@ -604,30 +764,33 @@ if(isset($_POST['payasgn']))
                  "Transporter": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/transporter_pay_assign/cr_transport_pay_assign.php",
                  "Expense": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/exp_pay_assign/cr_exp_payassign.php",
                  "Salary Processing": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/salary_pay_assign/cr_salary_payassign.php",
-                 "Operator": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/cr_operator_payasgn.php",
                  "Others": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/other_pay_assign/cr_others_payasn.php",
+                 "Operator": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/operator_pay_assign/cr_operator_payasgn.php",
                  "Rent": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/rent_pay_assign/cr_rent_payassign.php",
                  "FD": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/fd_pay_assign/cr_fd_payassign.php",
                  "Collection": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/colctn_pay_assign/cr_col_payassign.php",
                  "GST": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/gst_pay_assign/cr_gst_payassign.php",
                  "Withdraw": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/withdw_pay_assign/cr_withdrw_payassign.php",
-                 "Bank Transfer": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/banktr_pay_assign/banktr_payassign.php"
-                 
+                 "Bank Transfer": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/banktr_pay_assign/banktr_payassign.php",
+                 "Asset Finance": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/asset_finance/cr_pay_assign.php",
+                 "DD": "<?php echo SITE_URL; ?>/basic/finance/payment_assign/dd_pay_assign/cr_dd_payassign.php"
                };
                const c_data = {
                  "Supplier": {bimpid:<?php echo $_GET['bimpid'];?>,trnsctyp:trnsctn_typ},
-                 "Vendor": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Transporter": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Expense": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Salary Processing": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "Vendor": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "Transporter": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "Expense": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "Salary Processing": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "Others": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
                  "Operator": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Others": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "Rent": {bimpid:<?php echo $_GET['bimpid'];?>},
                  "FD": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
                  "Collection": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
                  "GST": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
                  "Withdraw": {bimpid:<?php echo $_GET['bimpid'];?>},
-                 "Bank Transfer": {bimpid:<?php echo $_GET['bimpid'];?>}
+                 "Bank Transfer": {bimpid:<?php echo $_GET['bimpid'];?>},
+                 "Asset Finance": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>},
+                 "DD": {bimpid:<?php echo $_GET['bimpid'];?>,org_id:<?php echo $fthorg->id;?>}
                };
                if (!c_apiEndpoints[transaction_to]) {
                   alert("Transaction to/type not available or not implemented");
@@ -644,7 +807,7 @@ if(isset($_POST['payasgn']))
                     },
                     error: function () {
                         alert('Failed to fetch data');
-                        $("#payasgn").prop("disabled", true); // Enable submit button after success
+                        $("#payasgn").prop("disabled", true); // disable submit button after fail
                     }
                 });
             }         
@@ -653,7 +816,7 @@ if(isset($_POST['payasgn']))
             response.forEach(function (item) {
             let prNums = [];
 
-            if (transaction_to === "Salary Processing" || transaction_to === "Expense") {
+            if (transaction_to === "Salary Processing" || transaction_to === "Expense" || transaction_to === "Supplier") {
                 prNums = [item.pr_num]; // Single value case
             } else {
                 prNums = item.pr_num.split('#'); // Multiple values case
@@ -688,12 +851,15 @@ if(isset($_POST['payasgn']))
             "Operator": "operator_pay_assign/operator_payasgn.php",
             "Transporter": "transporter_pay_assign/transport_pay_assign.php",
             "Salary Processing": "salary_pay_assign/salary_payassign.php",
-            "Expense": "exp_pay_assign/exp_payassign.php",
             "Others": "other_pay_assign/others_payasn.php",
-            "Rent": "rent_pay_assign/rent_payassign.php",
+            "Expense": "exp_pay_assign/exp_payassign.php",
             "Collection": "colctn_pay_assign/col_payassign.php",
+            "Rent": "rent_pay_assign/rent_payassign.php",
             "GST": "gst_pay_assign/gst_payassign.php",
-            "Withdraw": "withdw_pay_assign/withdrw_payassign.php"
+            "Withdraw": "withdw_pay_assign/withdrw_payassign.php",
+            "Cheque": "cheque_pay_assign/che_payassign.php",
+            "Asset Finance": "asset_finance/pay_assign.php",
+            "Loan Assignment": "loanass_pay_assign/loan_payassign.php"
           };
 
           // Check if transaction type exists in mapping
@@ -715,7 +881,7 @@ if(isset($_POST['payasgn']))
             },
             error: function () {
                 alert(`Failed to fetch ${trnsto.toLowerCase()} data`);
-                $("#payasgn").prop("disabled", true); // Enable submit button after success
+                $("#payasgn").prop("disabled", true); // Disable submit button after fail
             }
           });
         });
@@ -732,12 +898,12 @@ if(isset($_POST['payasgn']))
       alert('Please select transaction type');
       return false;
    }
-   if(trnsctn_typ.toUpperCase()=='DEBIT')
+    if(trnsctn_typ.toUpperCase()=='DEBIT')
     {
-        if (!request_num && trnscto !== "FD" && trnscto !== "Bank Transfer") {
+        if (!request_num && trnscto !== "FD" && trnscto !== "Bank Transfer" && trnscto !== "Others" && trnscto !== "DD") {
             alert("Please select request number");
             return false;
-        }
+         }
 
         // Mapping transaction types to their respective total amount field IDs
         var amountFields = {
@@ -747,12 +913,15 @@ if(isset($_POST['payasgn']))
             "Transporter": "all_total",
             "Salary Processing": "all_total",
             "Expense": "all_total",
-            "Others": "requested_amt",
             "Rent": "rate_request_amount",
             "FD": "amount",
             "Collection": "col_requested_amt",
             "GST": "reqamt",
-            "Withdraw": "reqamt"
+            "Withdraw": "reqamt",
+            "Cheque" : "chqrqamnt",
+            "Asset Finance": "requested_amt",
+            "DD": "amount",
+            "Loan Assignment" : "total_amt_emi"
         };
         var errorMessages = {
             "Supplier": "Total request amount should match the paid amount",
@@ -761,12 +930,15 @@ if(isset($_POST['payasgn']))
             "Transporter": "Requested amount should match the paid amount",
             "Salary Processing": "Net payment should match the paid amount",
             "Expense": "Total payment should match the paid amount",
-            "Others": "Requested amount must match the paid amount",
             "Rent": "Rent rate must match the paid amount",
             "FD": "FD amount must match the paid amount",
             "Collection": "Requested amount must match the paid amount",
             "GST": "Amount must match the paid amount",
-            "Withdraw": "Request amount must match the paid amount"
+            "Withdraw": "Request amount must match the paid amount",
+            "Cheque" : "Request amount must match the paid amount",
+            "Asset Finance": "Request amount must match the paid amount",
+            "DD": "Total amount must match the paid amount",
+            "Loan Assignment" : "Total amount must match the paid amount"
         };
         var organ_fields = {
             "Supplier": "s_organization",
@@ -774,15 +946,18 @@ if(isset($_POST['payasgn']))
             "Operator": "o_organization",
             "Transporter": "t_organization",
             "Salary Processing": "sal_organization",
-            "Expense": "e_organization",
             "Others": "ot_organization",
-            "Rent": "re_organization",
+            "Expense": "e_organization",
             "Collection": "co_organization",
+            "Rent": "re_organization",
             "GST": "gst_organization",
-            "Withdraw": "w_organization"
+            "Withdraw": "w_organization",
+            "Cheque": "ch_organization",
+            "Asset Finance": "asfi_organization",
+            "Loan Assignment": "loan_organization"
         };
-         // Additional validation for FD
-         if (trnscto === "FD") 
+        // Additional validation 
+        if (trnscto === "FD") 
          {
             const fd_fields = [
             { id:'fdno', name: 'FD no.'},
@@ -801,26 +976,36 @@ if(isset($_POST['payasgn']))
          }
          if (trnscto === "Collection") 
          {
-            const col_fields = [
-            { id: 'prjctnm', name: 'Project name'},
-            { id: 'sbprjctnm', name: 'Sub project name'},
-            { id: 'remark', name: 'Ramark'}
-           ];
-            for (let col_field of col_fields) {
-               let col_value = document.getElementById(col_field.id).value.trim();
-               let col_id =  document.getElementById(col_field.id);
-               if (!col_value) {
-                  alert(`${col_field.name} field is required!`);
-                  col_id.style.border = '1px solid red';
-                  return false;
-               }
-               else {
-                  col_id.style.border = ''; // Reset border if valid
-               }
+            let prjctnm = document.getElementById("prjctnm").value;
+            let sbprjctnm = document.getElementById("sbprjctnm").value;
+            let remark = document.getElementById("remark").value;
+            if(prjctnm == ""){
+               alert("Please enter project");
+               $("#prjctnm").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+               $("#prjctnm").siblings(".select2-container").find(".select2-selection").focus();
+               return false;
+            }else{
+               $("#prjctnm").siblings(".select2-container").find(".select2-selection").css("border", "");
+            }
+            if(sbprjctnm == ""){
+               alert("Please enter sub project");
+               $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+               $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").focus();
+               return false;
+            }else{
+               $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").css("border", "");
+            }
+            if(remark == ""){
+               alert("Please enter remark");
+               $("#remark").css("border", "1px solid #ec1313");
+               $("#remark").focus();
+               return false;
+            }else{
+               $("#remark").css("border", ""); 
             }
          }
-         if (trnscto === "Bank Transfer") 
-         {
+        if (trnscto === "Bank Transfer") 
+        {
             const bank_fields = [
             { id: 'org_nm', name: 'Organization name'},
             { id: 'bnkaccnt', name: 'Bank Allias Name'},
@@ -833,8 +1018,150 @@ if(isset($_POST['payasgn']))
                   return false;
                }
             }
-         } 
-         
+         }
+         if (trnscto === "Cheque") 
+         {
+            const ch_fields = [
+            { id: 'chqno', name: 'Cheque No'},
+            { id: 'chqmessage', name: 'Message'}
+            ];
+            for (let ch_field of ch_fields) {
+               let ch_value = document.getElementById(ch_field.id).value.trim();
+               let ch_id =  document.getElementById(ch_field.id);
+               if (!ch_value) {
+                  alert(`${ch_field.name} field is required!`);
+                  ch_id.style.border = '1px solid red';
+                  return false;
+               }
+               else{
+                  ch_id.style.border = ''; // Reset border if valid
+               }
+            }
+         }
+         if (trnscto === "Asset Finance") 
+         {
+            const ass_fields = [
+            { id: 'prjctnm', name: 'Project name'},
+            { id: 'sbprjctnm', name: 'Sub project name'}
+           ];
+            for (let ass_field of ass_fields) {
+               let ass_value = document.getElementById(ass_field.id).value.trim();
+               if (!ass_value) {
+                  alert(`${ass_field.name} field is required!`);
+                  $("#"+ass_field.id).siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+                  $("#"+ass_field.id).siblings(".select2-container").find(".select2-selection").focus();
+                  return false;
+               }
+               else {
+                  $("#"+ass_field.id).siblings(".select2-container").find(".select2-selection").css("border", "");
+               }
+            }
+         }
+         if (trnscto === "Others") 
+         {
+            let head = document.getElementById('othrhead').value.trim();
+            let linkwith = document.getElementById('linkedwith').value.trim()
+            if(!head)
+            {
+               alert('Please select head');
+               $("#othrhead").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+               $("#othrhead").siblings(".select2-container").find(".select2-selection").focus();
+               return false;
+            }
+            else
+            {
+               $("#othrhead").siblings(".select2-container").find(".select2-selection").css("border", ""); 
+            }
+            if(linkwith == 'Indivisual')
+            {
+               let prjctnm = document.getElementById('prjctnm').value.trim();
+               let sbprjctnm = document.getElementById('sbprjctnm').value.trim();
+               if(!prjctnm){
+                  alert('Please select project')
+                  $("#prjctnm").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+                  $("#prjctnm").siblings(".select2-container").find(".select2-selection").focus();
+                  return false;
+               }else{
+                  $("#prjctnm").siblings(".select2-container").find(".select2-selection").css("border", ""); 
+               }
+               if(!sbprjctnm){
+                  alert('Please select sub project')
+                  $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+                  $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").focus();
+                  return false;
+               }else{
+                  $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").css("border", ""); 
+               }
+            }else{
+               let otherReason = document.getElementById("othres").value;
+               let otherAmount = document.getElementById("oth_amount").value.trim();
+               if (otherReason !== "" && otherAmount === "") {
+                  alert("Please enter Other Charges Amount if you selected an Other Reason.");
+                  $("#oth_amount").css("border", "1px solid #ec1313");
+                  $("#oth_amount").focus();
+                  return false; // Prevent form submission
+               }
+               else{
+                  $("#oth_amount").css("border", "");
+               }
+               let request_num_dr = document.getElementById('request_num_dr').value.trim();
+               if(!request_num_dr){
+                  alert('Please request number')
+                  $("#request_num_dr").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+                  $("#request_num_dr").siblings(".select2-container").find(".select2-selection").focus();
+                  return false;
+               }else{
+                  $("#request_num_dr").siblings(".select2-container").find(".select2-selection").css("border", ""); 
+               }
+               // Compare total amount with paid amount
+               let total_amt_oth = parseFloat(document.getElementById('requested_amt').value) || 0;
+               let totalAmount = Number.isFinite(total_amt_oth) && total_amt_oth % 1 !== 0 ? Math.trunc(total_amt_oth) : total_amt_oth;
+               let paidAmount = Number.isFinite(paidamt) && paidamt % 1 !== 0 ? Math.trunc(paidamt) : paidamt;
+               if (totalAmount !== paidAmount) {
+                  alert("Requested Amount and Paid Amount must be the same!");
+                  $("#requested_amt").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+                  $("#requested_amt").focus();
+                  return false;
+               }
+               else{
+                  $("#requested_amt").css("border", ""); 
+               }
+            }
+
+         }
+         if(trnscto === "Supplier" || trnscto === "Vendor" || trnscto === "Transporter" || trnscto === "DD"  || trnscto === "Loan Assignment")
+         {
+            let otherReason = document.getElementById("othres").value;
+            let otherAmount = document.getElementById("oth_amount").value.trim();
+            if (otherReason !== "" && otherAmount === "") {
+               alert("Please enter Other Charges Amount if you selected an Other Reason.");
+               $("#oth_amount").css("border", "1px solid #ec1313");
+               $("#oth_amount").focus();
+               return false; // Prevent form submission
+            }
+            else{
+               $("#oth_amount").css("border", "");
+            }
+         }
+         if (trnscto === "DD") 
+         {
+            const dd_fields = [
+            { id:'ddno', name: 'DD no.'},
+            { id: 'prjctnm', name: 'Project name'},
+            { id: 'sbprjctnm', name: 'Sub project name'},
+            { id: 'purpose', name: 'Purpose'},
+            { id: 'ddexprsn', name: 'Expense Reasons'},
+            { id: 'ddbenificiary', name: 'Benificiary'},
+            { id: 'message', name: 'Message'}
+           ];
+            for (let dd_field of dd_fields) {
+               let dd_value = document.getElementById(dd_field.id).value.trim();
+               if (!dd_value) {
+                  alert(`${dd_field.name} field is required!`);
+                  return false;
+               }
+            }
+         }
         if (organ_fields[trnscto]) {
             var orgaField = document.getElementById(organ_fields[trnscto]);
 
@@ -860,10 +1187,10 @@ if(isset($_POST['payasgn']))
                 alert("Total amount field is missing or invalid");
                 return false;
             }
-
-            var totalAmount = parseFloat(totalAmountField.value) || 0;
-
-            if (totalAmount !== paidamt) {
+            var totalAmountValue = parseFloat(totalAmountField.value) || 0;
+            var totalAmount = Number.isFinite(totalAmountValue) && totalAmountValue % 1 !== 0 ? Math.trunc(totalAmountValue) : totalAmountValue;
+            var paidAmount = Number.isFinite(paidamt) && paidamt % 1 !== 0 ? Math.trunc(paidamt) : paidamt;
+            if (totalAmount !== paidAmount) {
                 alert(errorMessages[trnscto]);
                 totalAmountField.style.border = '1px solid red';
                 return false;
@@ -873,21 +1200,35 @@ if(isset($_POST['payasgn']))
         }
         
         // Additional validation for Salary Processing
-        if (trnscto === "Salary Processing") 
-        {
+        if (trnscto === "Salary Processing") {
             var sp_remark = document.getElementById("sp_remarks");
             if (!sp_remark || sp_remark.value.trim() === '') {
-                  alert("Provide Remark");
-                  sp_remark.style.border = '1px solid red';
-                  return false;
+                alert("Provide Remark");
+                sp_remark.style.border = '1px solid red';
+                return false;
             } else {
-                  sp_remark.style.border = ''; // Reset border if valid
+                sp_remark.style.border = ''; // Reset border if valid
             }
-         }
-         return true;
+        }
+
+        return true;
     }
     else if(trnsctn_typ.toUpperCase()=='CREDIT')
     {
+      if(trnscto === "FD" || trnscto === "DD")
+      {
+         let otherReason = document.getElementById("othres").value;
+         let otherAmount = document.getElementById("oth_amount").value.trim();
+         if (otherReason !== "" && otherAmount === "") {
+            alert("Please enter Other Charges Amount if you selected an Other Reason.");
+            $("#oth_amount").css("border", "1px solid #ec1313");
+            $("#oth_amount").focus();
+            return false; // Prevent form submission
+         }
+         else{
+            $("#oth_amount").css("border", "");
+         }
+      }
       if (trnscto === "Supplier") 
       {
          const fields = [
@@ -909,7 +1250,7 @@ if(isset($_POST['payasgn']))
       else if(trnscto === "Transporter")
       {
          const tr_fields = [
-            { id:'trnsprtrnm', name: 'Transporter name'},
+            { id:'trnsprtrnm', name: 'Transporter'},
             { id: 'prjctnm', name: 'Project name'},
             { id: 'subprjnm', name: 'Sub project name'},
             { id: 'ponum', name: 'PO number'}
@@ -918,6 +1259,23 @@ if(isset($_POST['payasgn']))
             let tr_value = document.getElementById(tr_field.id).value.trim();
             if (!tr_value) {
                alert(`${tr_field.name} field is required!`);
+               return false;
+            }
+         }
+         return true;
+      }
+      else if(trnscto === "Others")
+      {
+         const oth_fields = [
+            { id:'othrhead', name: 'Head'},
+            { id: 'ptcrt', name: 'Payment to be Credit to'},
+            { id: 'prjctnm', name: 'Project Name'},
+            { id: 'sbprjctnm', name: 'Sub Project Name'}
+         ];
+         for (let oth_field of oth_fields) {
+            let oth_value = document.getElementById(oth_field.id).value.trim();
+            if (!oth_value) {
+               alert(`${oth_field.name} field is required!`);
                return false;
             }
          }
@@ -950,7 +1308,8 @@ if(isset($_POST['payasgn']))
             { id:'expns_for', name: 'Expense for'},
             { id: 'exp_for_empcode', name: 'Employee Code'},
             { id: 'prjct', name: 'Project name'},
-            { id: 'sub_prjct', name: 'Sub project name'}
+            { id: 'sub_prjct', name: 'Sub project name'},
+            { id: 'bmsnm', name: 'Billing Milestone'}
          ];
          for (let ex_field of ex_fields) {
             let ex_value = document.getElementById(ex_field.id).value.trim();
@@ -979,7 +1338,9 @@ if(isset($_POST['payasgn']))
          }
          // Compare total amount with paid amount
          let total_amt = parseFloat(document.getElementById('total_amt').value) || 0;
-         if (total_amt !== paidamt) {
+         let totalAmount = Number.isFinite(total_amt) && total_amt % 1 !== 0 ? Math.trunc(total_amt) : total_amt;
+         let paidAmount = Number.isFinite(paidamt) && paidamt % 1 !== 0 ? Math.trunc(paidamt) : paidamt;
+         if (totalAmount !== paidAmount) {
             alert("Total Amount and Paid Amount must be the same!");
             return false;
          }
@@ -1003,58 +1364,82 @@ if(isset($_POST['payasgn']))
          }
          return true;
       }
-      else if(trnscto === "Others")
+      else if (trnscto === "Collection") 
       {
-         const oth_fields = [
-            { id:'othrhead', name: 'Head'},
-            { id: 'ptcrt', name: 'Payment to be Credit to'},
-            { id: 'prjctnm', name: 'Project Name'},
-            { id: 'sbprjctnm', name: 'Sub Project Name'}
-         ];
-         for (let oth_field of oth_fields) {
-            let oth_value = document.getElementById(oth_field.id).value.trim();
-            if (!oth_value) {
-               alert(`${oth_field.name} field is required!`);
-               return false;
-            }
-         }
-         return true;
-      }
-      else if(trnscto === "Rent")
-      {
-         const rnt_fields = [
-            { id:'year', name: 'Year'},
-            { id: 'month', name: 'Month'},
-            { id: 'type', name: 'Type'},
-            { id: 'purpose', name: 'Purpose'}
-         ];
-         for (let rnt_field of rnt_fields) {
-            let rnt_value = document.getElementById(rnt_field.id).value.trim();
-            if (!rnt_value) {
-               alert(`${rnt_field.name} field is required!`);
-               return false;
-            }
-         }
-        let selected = document.querySelector('input[name="selected_row"]:checked');
-        if (!selected) {
-            alert("Please select one of the rent details.");
-            return false; // Prevent form submission
-        }
-        // Extract the row index from selected radio button
-         let index = selected.value;
-         // Get the rate and paid amount fields
-         let rate = parseFloat(document.getElementById(`rate${index}`).value);
-         alert(rate);
-         if (paidamt !== rate) {
-            alert(`Paid amount must match the rate.`);
-            return false;
-         }
+         let dbtr_typ = document.getElementById("dbtr_typ").value;
+         let client_nm = document.getElementById("client_nm").value;
+         let prjctnm = document.getElementById("prjctnm").value;
+         let sbprjctnm = document.getElementById("sbprjctnm").value;
+         let remark = document.getElementById("remark").value;
 
-        return true;
-      }
+         if(dbtr_typ == ""){
+            alert("Please enter debtor type");
+            $("#dbtr_typ").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+            $("#dbtr_typ").siblings(".select2-container").find(".select2-selection").focus();
+            return false;
+         }else{
+            $("#dbtr_typ").siblings(".select2-container").find(".select2-selection").css("border", "");
+         }
+         if(client_nm == ""){
+            alert("Please enter client name");
+            $("#client_nm").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+            $("#client_nm").siblings(".select2-container").find(".select2-selection").focus();
+            return false;
+         }else{
+            $("#client_nm").siblings(".select2-container").find(".select2-selection").css("border", "");
+         }
+         if(dbtr_typ == '12'){
+            let transaction_for = document.getElementById("transaction_for").value;
+            if(transaction_for == ""){
+               alert("Please enter transaction for");
+               $("#transaction_for").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+               $("#transaction_for").siblings(".select2-container").find(".select2-selection").focus();
+               return false;
+            }else{
+               $("#transaction_for").siblings(".select2-container").find(".select2-selection").css("border", "");
+            }
+         }
+         if(prjctnm == ""){
+            alert("Please enter project");
+            $("#prjctnm").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+            $("#prjctnm").siblings(".select2-container").find(".select2-selection").focus();
+            return false;
+         }else{
+            $("#prjctnm").siblings(".select2-container").find(".select2-selection").css("border", "");
+         }
+         if(sbprjctnm == ""){
+            alert("Please enter sub project");
+            $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+            $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").focus();
+            return false;
+         }else{
+            $("#sbprjctnm").siblings(".select2-container").find(".select2-selection").css("border", "");
+         }
+         if(transaction_for == 'RESCO'){
+            let unit = document.getElementById("unit_nmid").value;
+            if(unit ==""){
+               alert("Please enter unit name");
+               $("#unit_nmid").siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313");
+               $("#unit_nmid").siblings(".select2-container").find(".select2-selection").focus();
+               return false;
+            }else{
+               $("#unit_nmid").siblings(".select2-container").find(".select2-selection").css("border", "");
+            }
+         }
+         if(remark == ""){
+            alert("Please enter remark");
+            $("#remark").css("border", "1px solid #ec1313");
+            $("#remark").focus();
+            return false;
+         }else{
+            $("#remark").css("border", ""); 
+         }
+         
+      } 
       else if (trnscto === "FD") 
       {
          const fd_fields = [
+         { id:'fdno', name: 'FD no.'},
          { id: 'prjctnm', name: 'Project name'},
          { id: 'sbprjctnm', name: 'Sub project name'},
          { id: 'purpose', name: 'Purpose'},
@@ -1067,29 +1452,20 @@ if(isset($_POST['payasgn']))
                return false;
             }
          }
-      }
-      else if (trnscto === "Collection") 
-      {
-         const col_fields = [
-         { id: 'dbtr_typ', name: 'Debtor type'},
-         { id: 'client_nm', name: 'Client name'},
-         { id: 'prjctnm', name: 'Project name'},
-         { id: 'sbprjctnm', name: 'Sub project name'},
-         { id: 'remark', name: 'Ramark'}
-         ];
-         for (let col_field of col_fields) {
-            let col_value = document.getElementById(col_field.id).value.trim();
-            let col_id =  document.getElementById(col_field.id);
-            if (!col_value) {
-               alert(`${col_field.name} field is required!`);
-               col_id.style.border = '1px solid red';
-               return false;
-            }
-            else {
-               col_id.style.border = ''; // Reset border if valid
-            }
+         // Compare fd amount with paid amount
+         let fdamt = parseFloat(document.getElementById('amount').value) || 0;
+         let totalAmount = Number.isFinite(fdamt) && fdamt % 1 !== 0 ? Math.trunc(fdamt) : fdamt;
+         let paidAmount = Number.isFinite(paidamt) && paidamt % 1 !== 0 ? Math.trunc(paidamt) : paidamt;
+         if (totalAmount !== paidAmount) {
+            alert("Total Amount and Paid Amount must be the same!");
+            $("#amount").css("border", "1px solid #ec1313");
+            $("#amount").focus();
+            return false; // Prevent form submission
          }
-      } 
+         else{
+            $("#amount").css("border", "");
+         }
+      }
       else if (trnscto === "GST") 
       {
          const gst_fields = [
@@ -1119,7 +1495,40 @@ if(isset($_POST['payasgn']))
             alert('Name field is required!');
             return false;
          }
-      }  
+      }
+      else if(trnscto === "Rent")
+      {
+         const rnt_fields = [
+            { id:'year', name: 'Year'},
+            { id: 'month', name: 'Month'},
+            { id: 'type', name: 'Type'},
+            { id: 'purpose', name: 'Purpose'}
+         ];
+         for (let rnt_field of rnt_fields) {
+            let rnt_value = document.getElementById(rnt_field.id).value.trim();
+            if (!rnt_value) {
+               alert(`${rnt_field.name} field is required!`);
+               return false;
+            }
+         }
+        let selected = document.querySelector('input[name="selected_row"]:checked');
+        if (!selected) {
+            alert("Please select one of the rent details.");
+            return false; // Prevent form submission
+        }
+        // Extract the row index from selected radio button
+         let index = selected.value;
+         // Get the rate and paid amount fields
+         let rate = parseFloat(document.getElementById(`rate${index}`).value) || 0;
+         let totalAmount = Number.isFinite(rate) && rate % 1 !== 0 ? Math.trunc(rate) : rate;
+         let paidAmount = Number.isFinite(paidamt) && paidamt % 1 !== 0 ? Math.trunc(paidamt) : paidamt;
+         if (paidAmount !== totalAmount) {
+            alert(`Paid amount must match the rate.`);
+            return false;
+         }
+
+        //return true;
+      }
       else if (trnscto === "Bank Transfer") 
       {
          const bank_fields = [
@@ -1134,7 +1543,60 @@ if(isset($_POST['payasgn']))
                return false;
             }
          }
-      } 
+      }
+      else if (trnscto === "Asset Finance") 
+      {
+         const asset_fields = [
+         { id: 'benif_acc', name: 'Benificiary A/c'},
+         { id: 'prjctnm', name: 'Project name'},
+         { id: 'sbprjctnm', name: 'Sub project name'}
+         ];
+         for (let asset_field of asset_fields) {
+            let asset_value = document.getElementById(asset_field.id).value.trim();
+            if (!asset_value) {
+               alert(`${asset_field.name} field is required!`);
+               $("#"+asset_field.id).siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+               $("#"+asset_field.id).siblings(".select2-container").find(".select2-selection").focus();
+               return false;
+            }
+            else {
+               $("#"+asset_field.id).siblings(".select2-container").find(".select2-selection").css("border", "");
+            }
+         }
+      }
+      else if (trnscto === "DD") 
+      {
+         const dd_fields = [
+         { id:'ddno', name: 'DD no.'},
+         { id: 'prjctnm', name: 'Project name'},
+         { id: 'sbprjctnm', name: 'Sub project name'},
+         { id: 'purpose', name: 'Purpose'},
+         { id: 'ddexprsn', name: 'Expense Reasons'},
+         { id: 'ddbenificiary', name: 'Benificiary'},
+         { id: 'message', name: 'Message'}
+         ];
+         for (let dd_field of dd_fields) {
+            let dd_value = document.getElementById(dd_field.id).value.trim();
+            if (!dd_value) {
+               alert(`${dd_field.name} field is required!`);
+               return false;
+            }
+         }
+         // Compare dd amount with paid amount
+         let ddamt = parseFloat(document.getElementById('amount').value) || 0;
+         let totalAmount = Number.isFinite(ddamt) && ddamt % 1 !== 0 ? Math.trunc(ddamt) : ddamt;
+         let paidAmount = Number.isFinite(paidamt) && paidamt % 1 !== 0 ? Math.trunc(paidamt) : paidamt;
+         if (totalAmount !== paidAmount) {
+            alert("Total Amount and Paid Amount must be the same!");
+            $("#amount").css("border", "1px solid #ec1313");
+            $("#amount").focus();
+            return false; // Prevent form submission
+         }
+         else{
+            $("#amount").css("border", "");
+         }
+      }
+      return true;
     }
     else
     {
@@ -1145,3 +1607,4 @@ if(isset($_POST['payasgn']))
   }
 
 </script>
+

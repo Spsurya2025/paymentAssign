@@ -163,7 +163,7 @@ if (!isset($_GET['request_num'])) {
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
         <label for="podate">Total Requested Operator Amount</label>
-        <input type="text" name="op_req_amt" id="op_req_amt" value="<?php echo $prjname = $arrData->payreq_amt; ?>" class="form-control" readonly>
+        <input type="text" name="op_req_amt_e" id="op_req_amt" value="<?php echo $prjname = $arrData->payreq_amt; ?>" class="form-control" readonly>
       </div>
     </div>
   </div>
@@ -231,8 +231,7 @@ if (!isset($_GET['request_num'])) {
                   <td>
                     <div class="input-group">
                       <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                      <input class="form-control" type="text" name="op_tpaid" id="all_total" value="<?php echo $fthop->totalamnt;?>" readonly>
-                      
+                      <input class="form-control" type="text" name="op_req_amt" id="total" value="<?php echo $fthop->totalamnt;?>" readonly>
                     </div>
                     <span id="amt-error" class="error-message"></span>
                   </td>
@@ -242,11 +241,76 @@ if (!isset($_GET['request_num'])) {
               ?>
             </tbody>
           </table>
+          <table class="table table-bordered table-responsive">
+            <thead>
+              <th>Other Charges Reason</th>
+              <th>Other Charges Amount</th>
+              <th>Total Requested amount:</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <select class="form-control select2" name="other_reason" id="othres">
+                    <option value="">---Select---</option>
+                    <?php 
+                      $queryoth = mysqli_query($con, "SELECT id,subtypenm FROM fin_grouping_subtype WHERE lnkwith LIKE 'Indivisual'");
+                      while($other = mysqli_fetch_object($queryoth))
+                      {
+                        echo "<option value='$other->id'>".$other->subtypenm."</option>"; 
+                      }
+                    ?>
+                  </select>
+                </td>
+                <td>        
+                  <input type="text" class="form-control" name="other_amt" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1')" id="oth_amount">
+                </td>
+                <td>
+                  <input type="text" class="form-control" id="all_total" readonly>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
+    
 
 </div>
 
 
 <!-- End of operator Form -->
+<script>
+  $(document).ready(function () {
+    $('#othres').select2();
+    // Disable the 'Other Amount' field initially
+    $('#oth_amount').prop('disabled', true);
+    var subtotal = parseFloat($("#total").val()) || 0.00;
+    $("#all_total").val(subtotal.toFixed(2));
+    // Enable 'Other Amount' field when a valid option is selected
+    $('#othres').on('change', function () {
+        if ($(this).val() === '') {
+            $('#oth_amount').prop('disabled', true).val('');
+            calc();
+        } else {
+            $('#oth_amount').prop('disabled', false);
+        }
+    });
+
+    // Function to calculate total
+    function calc() {
+        var othAmt = parseFloat($("#oth_amount").val()) || 0.00;
+        var grandTotal = subtotal + othAmt;
+        $("#all_total").val(grandTotal.toFixed(2));
+    }
+
+    // Trigger calc when 'Other Amount' is changed
+    $('#oth_amount').on('input', calc);
+    
+  });
+
+ </script>
+ <?php if(isset($_GET['peid'])) { ?>
+  <script>
+    $('#othres').prop('disabled', true); 
+  </script>
+  <?php } ?>

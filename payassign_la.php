@@ -198,7 +198,7 @@ if(isset($_POST['payasgn']))
             throw new Exception("Failed to update fin_banking_imports.");
         }       
         mysqli_commit($con);
-        echo "<script>alert('Payment assigned successfully'); window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
+        echo "<script>alert($msg'Payment assigned successfully'); window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
     } catch (Exception $e) {
         mysqli_rollback($con);
         echo "<script>alert('Failed: " . $e->getMessage() . "'); window.history.go(-1);</script>";

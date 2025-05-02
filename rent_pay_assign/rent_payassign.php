@@ -17,7 +17,7 @@ if (!isset($_GET['request_num'])) {
   
 <!-- End of Scripts -->
 
-<!-- Oerator Form -->
+<!-- rent Form -->
  <?php
    $payment_req_id = $_GET['py_req_id'];
    $rnt_qry = mysqli_query($con, "SELECT * FROM fin_payment_request_rent WHERE payreq_id='$payment_req_id'");
@@ -185,10 +185,39 @@ if (!isset($_GET['request_num'])) {
                     </select>
                   </td>
                   <td>
-                    <input type="text" name="rate" id="rate_request_amount" value="<?php echo $fthDetails->rate;?>" class="form-control" readonly>
+                    <input type="text" name="rate" id="rate_request_amount_e" value="<?php echo $fthDetails->rate;?>" class="form-control" readonly>
                   </td>
                 </tr>
               <?php } ?>
+            </tbody>
+          </table>
+          <table class="table table-bordered table-responsive">
+            <thead>
+              <th>Other Charges Reason</th>
+              <th>Other Charges Amount</th>
+              <th>Total Requested amount:</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <select class="form-control select2" name="other_reason" id="othres">
+                    <option value="">---Select---</option>
+                    <?php 
+                      $queryoth = mysqli_query($con, "SELECT id,subtypenm FROM fin_grouping_subtype WHERE lnkwith LIKE 'Indivisual'");
+                      while($other = mysqli_fetch_object($queryoth))
+                      {
+                        echo "<option value='$other->id'>".$other->subtypenm."</option>"; 
+                      }
+                    ?>
+                  </select>
+                </td>
+                <td>        
+                  <input type="text" class="form-control" name="other_amt" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1')" id="oth_amount">
+                </td>
+                <td>
+                  <input type="text" class="form-control" id="rate_request_amount" readonly>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -198,4 +227,39 @@ if (!isset($_GET['request_num'])) {
 </div>
 <?php } ?>
 
-<!-- End of operator Form -->
+<!-- End of rent Form -->
+<script>
+  $(document).ready(function () {
+    $('#othres').select2();
+    // Disable the 'Other Amount' field initially
+    $('#oth_amount').prop('disabled', true);
+    var subtotal = parseFloat($("#rate_request_amount_e").val()) || 0.00;
+    $("#rate_request_amount").val(subtotal.toFixed(2));
+    // Enable 'Other Amount' field when a valid option is selected
+    $('#othres').on('change', function () {
+        if ($(this).val() === '') {
+            $('#oth_amount').prop('disabled', true).val('');
+            calc();
+        } else {
+            $('#oth_amount').prop('disabled', false);
+        }
+    });
+
+    // Function to calculate total
+    function calc() {
+        var othAmt = parseFloat($("#oth_amount").val()) || 0.00;
+        var grandTotal = subtotal + othAmt;
+        $("#rate_request_amount").val(grandTotal.toFixed(2));
+    }
+
+    // Trigger calc when 'Other Amount' is changed
+    $('#oth_amount').on('input', calc);
+    
+  });
+
+ </script>
+ <?php if(isset($_GET['peid'])) { ?>
+  <script>
+    $('#othres').prop('disabled', true); 
+  </script>
+  <?php } ?>

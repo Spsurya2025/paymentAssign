@@ -3,7 +3,7 @@ require_once('../../../auth.php');
 require_once('../../../config.php');
 ?>
 <?php
-if (isset($_POST['org_nm'])) {
+ if (isset($_POST['org_nm'])) {
     $orgid = mysqli_real_escape_string($con, $_POST['org_nm']);
     $gtbacc = mysqli_query($con, "SELECT id,accnm FROM `fin_bankaccount` WHERE `orgid`='$orgid' AND status='1'");
 

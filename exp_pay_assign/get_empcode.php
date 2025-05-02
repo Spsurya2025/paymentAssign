@@ -2,7 +2,7 @@
 <?php
 	if(isset($_POST['empnm'])) {
 
-		$emplid = mysqli_real_escape_string($con, $_POST['empnm']);
+	  $emplid = mysqli_real_escape_string($con, $_POST['empnm']);
 
 	  $sql = mysqli_query($con, "SELECT * FROM `hr_assign_department` WHERE `empname_id`= '$emplid'");
 

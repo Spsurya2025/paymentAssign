@@ -7,10 +7,11 @@
     	$client_id = $_POST['client_id'];
         $org_nm = $_POST['org_nm'];
       
-    	//$get_clientnm = mysqli_query($con,"SELECT * FROM `fin_customers` WHERE `status`='1' AND group_subtype='12' AND id='$client_id' ORDER BY `companynm` ASC");
+    	$get_clientnm = mysqli_query($con,"SELECT * FROM `fin_customers` WHERE `status`='1' AND group_subtype='12' AND id='$client_id' ORDER BY `companynm` ASC");
         $ftch_clnt = mysqli_fetch_object($get_clientnm);
         $clnt_nm = $ftch_clnt->companynm;
-    	
+    	 echo "SELECT * from (SELECT prj.id AS prjid,prj.pname AS prj_nm, clnt.prj_id FROM `resco_add_client` clnt LEFT JOIN `prj_project` prj ON (clnt.`prj_id`= prj.id AND prj.ptype='RESCO') WHERE clnt.apval_status IN ('1') AND prj.ptype_org='$org_nm' AND clnt.client_id='$client_id' UNION ALL SELECT prj.id AS prjid,prj.pname AS prj_nm, prj_or.project_name FROM `prj_order` prj_or LEFT JOIN `prj_project` prj ON prj_or.project_name=prj.id WHERE prj.ptype='RESCO' AND prj.ptype_org='$org_nm' AND (prj_or.client_name='$clnt_nm' OR prj_or.client_name='$client_id') AND (prj_or.sec_stage_approve='1')) AS result GROUP BY prjid ORDER BY prj_nm ASC";
+		die();
         /*$get_clntprj = mysqli_query($con, "SELECT prj.id AS prjid,prj.pname, clnt.prj_id,prj_or.project_name FROM `resco_add_client` clnt LEFT JOIN `prj_order` prj_or ON clnt.`prj_id`= prj_or.project_name LEFT JOIN `prj_project` prj ON ((clnt.`prj_id`= prj.id OR prj_or.project_name=prj.id) AND prj.ptype='RESCO') WHERE (clnt.client_id='$client_id' OR (prj_or.client_name='$clnt_nm' OR prj_or.client_name='$client_id')) AND (clnt.apval_status IN ('1') OR (prj_or.first_stage_aprrove='1' AND prj_or.sec_stage_approve='1')) GROUP BY prj.pname ORDER BY prj.pname ASC");*/
         $get_clntprj = mysqli_query($con, "SELECT * from 
                                         (SELECT prj.id AS prjid,prj.pname AS prj_nm, clnt.prj_id FROM `resco_add_client` clnt 
@@ -23,6 +24,7 @@
                                             WHERE prj.ptype='RESCO' AND prj.ptype_org='$org_nm' AND (prj_or.client_name='$clnt_nm' OR prj_or.client_name='$client_id') AND (prj_or.sec_stage_approve='1')
                                         ) AS result GROUP BY prjid ORDER BY prj_nm ASC"
                                     );
+									
 
     	if($get_clntprj->num_rows > 0)
     	{

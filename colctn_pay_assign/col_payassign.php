@@ -78,9 +78,56 @@ if (!isset($_GET['request_num'])) {
             <label for="clientnm">Client Name</label>
             <select class="form-control" name="clientnm" id="clientnm" readonly>
                 <?php
-                    $sql = mysqli_query($con,"SELECT id,companynm FROM `fin_customers` WHERE `id`='$fthcolc->client_nm' AND `status`='1'");
-                    $fetch = mysqli_fetch_object($sql);
-                    echo "<option value='".$fetch->id."'>".$fetch->companynm."</option>";
+                  // $sql = mysqli_query($con,"SELECT id,companynm FROM `fin_customers` WHERE `id`='$fthcolc->client_nm' AND `status`='1'");
+                  // $fetch = mysqli_fetch_object($sql);
+                  // echo "<option value='".$fetch->id."'>".$fetch->companynm."</option>";
+                  //echo getDebtorTypeDetails($con, $partynm,$pancol,$tancol,$lnkwith,$dbtrtype);
+                  
+                  function getDebtorTypeDetails($con, $partyColumn, $panColumn, $tanColumn, $lnkwith, $dbtrtype,$clientid) {                    
+                    $table = mysqli_real_escape_string($con, $lnkwith);
+                    $query_str = "SELECT id, `$partyColumn`, `$panColumn`, `$tanColumn`, pan_or_tan_prefer, supplyplace, bilphone, dprtmnt FROM `$table` WHERE `id`='$clientid' AND `status`='1'";
+                  
+                    if ($dbtrtype) {
+                      $query_str .= " AND group_subtype='" .$dbtrtype. "'";
+                    }
+                  
+                    $query = mysqli_query($con, $query_str);
+                  
+                    if ($query) {
+                      while ($row = mysqli_fetch_assoc($query)) {
+                        $pan = '';
+                        if ($row['pan_or_tan_prefer'] == 0) {
+                          $pan = $row[$panColumn];
+                        } elseif ($row['pan_or_tan_prefer'] == 1) {
+                          $pan = $row[$tanColumn];
+                        }
+                  
+                        // Get state name
+                        $state = '';
+                        $getstate = mysqli_query($con, "SELECT sname FROM prj_state WHERE id='" . mysqli_real_escape_string($con, $row['supplyplace']) . "'");
+                        if ($statede = $getstate->fetch_object()) {
+                          $state = $statede->sname;
+                        }
+                  
+                        $phone = htmlspecialchars($row['bilphone']);
+                        $depart = htmlspecialchars($row['dprtmnt']);
+                        $partyName = htmlspecialchars($row[$partyColumn]);
+                  
+                        $optionName = $partyName . ' (' . htmlspecialchars($pan) . ', ' . htmlspecialchars($state) . ', ' . $phone . ', ' . htmlspecialchars($depart) . ')';
+                  
+                        $options .= '<option value="' . htmlspecialchars($row['id']) . '">' . $optionName . '</option>';
+                      }
+                    }
+                    
+                    return $options;
+                  }
+                  $dbtrtype = $fthcolc->dbtr_typ;
+                  $clientid = $fthcolc->client_nm;
+    $partynm = 'companynm';
+    $pancol = 'pan';
+    $tancol = 'tan';
+    $lnkwith = 'fin_customers';
+                  echo getDebtorTypeDetails($con, $partynm,$pancol,$tancol,$lnkwith,$dbtrtype,$clientid);
                 ?>
             </select>
         </div>
@@ -91,7 +138,7 @@ if (!isset($_GET['request_num'])) {
         <select class="form-control" name="prj_name" id="prjctnm">
         <option value="">--- Select Project ---</option>
         <?php
-          $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' AND `ptype_org`='$fthorg->id'");
+          $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' AND (`ptype_org`='$fthorg->id' OR ptype='Corporate')");
           while ($prjnm = mysqli_fetch_object($prjqr)) {
             echo "<option value='$prjnm->id'>".$prjnm->pname."</option>";
           }

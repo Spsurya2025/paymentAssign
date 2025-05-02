@@ -13,7 +13,7 @@ if (!isset($_GET['request_num'])) {
 }
 ?> 
 <!-- End of Scripts -->
-<!-- Oerator Form -->
+<!-- transporter Form -->
 <div class="row" style="margin-top: 20px;">
 <?php
     $pr_id = $_GET['py_req_id'];
@@ -223,13 +223,82 @@ if (!isset($_GET['request_num'])) {
         <label for="trnsp_req_amt">Requested Amount</label>
         <div class="input-group">
           <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-          <input type="text" class="form-control" name="trnsp_req_amt" id="all_total" placeholder="9999.99" value="<?php echo $fthtrns->rqst_amnt;?>" readonly>
+          <input type="text" class="form-control" name="trnsp_req_amt" id="all_total_oth" placeholder="9999.99" value="<?php echo $fthtrns->rqst_amnt;?>" readonly>
         </div>
       </div>
     </div>
-  <div class="col-lg-12">
-  </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+      <div class="form-group">
+        <label for="trnsp_req_amt">Other Charges Reason</label>
+        <select class="form-control select2" name="other_reason" id="othres">
+          <option value="">---Select---</option>
+          <?php 
+            $queryoth = mysqli_query($con, "SELECT id,subtypenm FROM fin_grouping_subtype WHERE lnkwith LIKE 'Indivisual'");
+            while($other = mysqli_fetch_object($queryoth))
+            {
+              echo "<option value='$other->id'>".$other->subtypenm."</option>"; 
+            }
+          ?>
+        </select>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+      <div class="form-group">
+        <label for="trnsp_req_amt">Other Charges Amount</label>
+        <div class="input-group">
+          <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
+          <input type="text" class="form-control" name="other_amt" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1')" id="oth_amount">
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
+      <div class="form-group">
+        <label for="trnsp_req_amt">Total Amount</label>
+        <div class="input-group">
+          <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
+          <input type="text" class="form-control" name="trnsp_req_amt_oth" id="all_total" placeholder="9999.99" value="<?php echo $fthtrns->rqst_amnt;?>" readonly>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      
+    </div>
 </div>
 
 
-<!-- End of operator Form -->
+
+<!-- End of transporter Form -->
+<script>
+  $(document).ready(function () {
+    $('#othres').select2();
+    // Disable the 'Other Amount' field initially
+    $('#oth_amount').prop('disabled', true);
+    var subtotal = parseFloat($("#all_total").val()) || 0.00;
+    $("#all_total").val(subtotal.toFixed(2));
+    // Enable 'Other Amount' field when a valid option is selected
+    $('#othres').on('change', function () {
+        if ($(this).val() === '') {
+            $('#oth_amount').prop('disabled', true).val('');
+            calc();
+        } else {
+            $('#oth_amount').prop('disabled', false);
+        }
+    });
+
+    // Function to calculate total
+    function calc() {
+        var othAmt = parseFloat($("#oth_amount").val()) || 0.00;
+        var grandTotal = subtotal + othAmt;
+        $("#all_total").val(grandTotal.toFixed(2));
+    }
+
+    // Trigger calc when 'Other Amount' is changed
+    $('#oth_amount').on('input', calc);
+    
+  });
+</script>
+<?php if(isset($_GET['peid'])) { ?>
+  <script>
+    $('#othres').prop('disabled', true); 
+  </script>
+  <?php } ?>

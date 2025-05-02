@@ -217,7 +217,7 @@ if (!isset($_GET['request_num'])) {
         $OverAllBalance_Jo = ($OverAllBalance_Jo - ($OverallJobOrder_wise_paid + $OverallJobOrder_wise_pending));
     }
         ?>
-<!-- Supplier Form -->
+<!-- Vendor Form -->
 <div class="row" style="margin-top: 20px;">
   <center><h4 style="text-decoration: underline; font-weight: bold; color: #37909e;">Vendor Payment Details</h4></center>
   <div class="col-lg-12">
@@ -237,7 +237,7 @@ if (!isset($_GET['request_num'])) {
           <?php
             if (isset($_GET['py_req_id'])) {
                 $pay_rid = $_GET['py_req_id'];
-                $sql1 = mysqli_query($con, "SELECT y.id,y.organisation FROM `fin_all_pay_request` x, `prj_organisation` y WHERE x.`pay_request_id`='$pay_rid' AND x.`organisation_id`=y.`id`");
+                $sql1 = mysqli_query($con, "SELECT x.id, x.organisation FROM fin_all_pay_request fpr LEFT JOIN fin_payment_request_vendor y ON fpr.pay_request_id = y.payreq_id LEFT JOIN prj_joborder_req z ON y.jobodrnum = z.jon LEFT JOIN prj_organisation x ON x.id=z.orgn WHERE fpr.pay_request_id = '$pay_rid'");
                 $fthorg = mysqli_fetch_object($sql1);
                 echo "<option value='".$fthorg->id."'>".$fthorg->organisation."</option>";
             }
@@ -378,23 +378,78 @@ if (!isset($_GET['request_num'])) {
                     <td>
                       <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-rupee"></i></span>
-                        <input type="text" class="form-control" name="req_amt_v" value="<?php echo  $fthvndrs->req_amt;?>" readonly>
+                        <input type="text" class="form-control" name="req_amt_v" id="req_amt_v" value="<?php echo  $fthvndrs->req_amt;?>" readonly>
                       </div>
                     </td>
-                    <tbody>
-                      <tr>
-                          <th colspan="3">Total Requested amount : </th>
-                          <th>
-                            <input type="text" class="form-control" id="all_total" value="<?php echo $fthvndrs->req_amt;?>" readonly>
-                            <span id="amt-error" class="error-message"></span>
-                          </th>
-                      </tr>
-                    </tbody>
                 </tr>
+            </tbody>
+          </table>
+          <table class="table table-bordered table-responsive">
+            <thead>
+              <th>Other Charges Reason</th>
+              <th>Other Charges Amount</th>
+              <th>Total Requested amount:</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <select class="form-control select2" name="other_reason" id="othres">
+                    <option value="">---Select---</option>
+                    <?php 
+                      $queryoth = mysqli_query($con, "SELECT id,subtypenm FROM fin_grouping_subtype WHERE lnkwith LIKE 'Indivisual'");
+                      while($other = mysqli_fetch_object($queryoth))
+                      {
+                        echo "<option value='$other->id'>".$other->subtypenm."</option>"; 
+                      }
+                    ?>
+                  </select>
+                </td>
+                <td>        
+                  <input type="text" class="form-control" name="other_amt" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1')" id="oth_amount">
+                </td>
+                <td>
+                  <input type="text" class="form-control" id="all_total" readonly>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>  
 </div>
-<!-- End of Supplier Form -->
+<!-- End of vendor Form -->
+ <script>
+  $(document).ready(function () {
+    $('#othres').select2();
+    // Disable the 'Other Amount' field initially
+    $('#oth_amount').prop('disabled', true);
+    var subtotal = parseFloat($("#req_amt_v").val()) || 0.00;
+    $("#all_total").val(subtotal.toFixed(2));
+    // Enable 'Other Amount' field when a valid option is selected
+    $('#othres').on('change', function () {
+        if ($(this).val() === '') {
+            $('#oth_amount').prop('disabled', true).val('');
+            calc();
+        } else {
+            $('#oth_amount').prop('disabled', false);
+        }
+    });
+
+    // Function to calculate total
+    function calc() {
+        var othAmt = parseFloat($("#oth_amount").val()) || 0.00;
+        var grandTotal = subtotal + othAmt;
+        $("#all_total").val(grandTotal.toFixed(2));
+    }
+
+    // Trigger calc when 'Other Amount' is changed
+    $('#oth_amount').on('input', calc);
+    
+  });
+ 
+ </script>
+  <?php if(isset($_GET['peid'])) { ?>
+  <script>
+    $('#othres').prop('disabled', true); 
+  </script>
+  <?php } ?>

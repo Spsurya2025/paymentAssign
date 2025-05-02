@@ -39,7 +39,7 @@
       }
     });
   });
- </script>
+</script>
 <?php
   if (!isset($_GET['organisation_id'])) {
     echo "<p style='color: red;'>Error: Organisation name is missing.</p>";
@@ -58,15 +58,15 @@
             <select class="form-control" name="fdno" id="fdno">
             <option value="">-- Select FD No. --</option>
             <?php
-                $orgdd = mysqli_query($con, "SELECT fd_no FROM `fin_fddtls` WHERE `status`='1' AND `orgnist`='$org_id'");
+                $orgdd = mysqli_query($con, "SELECT id,fd_no FROM `fin_fddtls` WHERE `status`='1' AND `orgnist`='$org_id'");
                 $total_results = mysqli_num_rows($orgdd);
                 if($total_results>0)
                 {
-                    while ($fthodd = mysqli_fetch_object($orgdd)) { 
-                    echo "<option value='".$fthodd->fd_no ."'>".$fthodd->fd_no."</option>";
-                    } 
+                  while ($fthodd = mysqli_fetch_object($orgdd)) { 
+                  echo "<option value='".$fthodd->id ."'>".$fthodd->fd_no."</option>";
+                  } 
                 }else{
-                    echo "<option value=''>No FD Found</option>";
+                  echo "<option value=''>No FD Found</option>";
                 }
             ?>
             </select>
@@ -78,7 +78,7 @@
         <select class="form-control" name="prj_name" id="prjctnm">
           <option value="">--- Select Project ---</option>
         <?php
-          $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' AND ptype_org='$org_id'");
+          $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' AND (ptype_org='$org_id' OR ptype='Corporate')");
           while ($prjnm = mysqli_fetch_object($prjqr)) {
             echo "<option value='$prjnm->id'>".$prjnm->pname."</option>";
           }

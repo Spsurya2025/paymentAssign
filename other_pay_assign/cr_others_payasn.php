@@ -47,11 +47,11 @@
   <div class="col-lg-12">
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
       <div class="form-group">
-        <label for="othrhead">Head</label>
+        <label for="othrhead">Head <span style="color:red">*</span></label>
         <select class="form-control" name="othrhead" id="othrhead">
             <option value="">---Select Head---</option>
             <?php
-              $gethdqr = mysqli_query($con, "SELECT `id`,`subtypenm` FROM `fin_grouping_subtype` WHERE `status`='1' AND `lnkwith`!='Indivisual' AND `lnkwith`!=''");
+              $gethdqr = mysqli_query($con, "SELECT `id`,`subtypenm` FROM `fin_grouping_subtype` WHERE `status`='1'");
               while($fchhd = mysqli_fetch_object($gethdqr)){
                 echo "<option value='".$fchhd->id."'>".$fchhd->subtypenm."</option>";
               }
@@ -61,7 +61,7 @@
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-12">
       <div class="form-group">
-        <label for="ptcrt">Payment to be Credit to</label>
+        <label for="ptcrt">Payment to be Credit to <span style="color:red">*</span></label>
         <select class="form-control" name="paytcr" id="ptcrt">
            <option value="">--- Select A Particular Name ---</option>
         </select>
@@ -69,11 +69,11 @@
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="prjctnm">Project Name</label>
-        <select class="form-control" name="prjnm" id="prjctnm">
+        <label for="prjctnm">Project Name <span style="color:red">*</span></label>
+        <select class="form-control" name="prjnm_req_num" id="prjctnm">
           <option value="">--- Select Project ---</option>
         <?php
-          $prjqr = mysqli_query($con, "SELECT * FROM `prj_project` WHERE `status`='1'");
+          $prjqr = mysqli_query($con, "SELECT * FROM `prj_project` WHERE `status`='1' AND (ptype_org='$_GET[org_id]' OR ptype='Corporate')");
           while ($prjnm = mysqli_fetch_object($prjqr)) {
             echo "<option value='$prjnm->id'>".$prjnm->pname."</option>";
           }
@@ -83,8 +83,8 @@
     </div>
     <div class="col-lg-3 col-md-6 col-sm-6 col-xs-6">
       <div class="form-group">
-        <label for="sbprjctnm">Sub Project Name</label>
-        <select class="form-control" name="subprjnm" id="sbprjctnm">
+        <label for="sbprjctnm">Sub Project Name <span style="color:red">*</span></label>
+        <select class="form-control" name="subprjnm_req_num" id="sbprjctnm">
           <option value="">--- Select Sub Project ---</option>
         </select>
       </div>

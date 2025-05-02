@@ -9,6 +9,7 @@
             <tr>
                 <th>#</th>
                 <th>Code</th>
+                <th>Organization</th>
                 <th>Payment Date</th>
                 <th>Client</th>
                 <th>Project</th>
@@ -25,7 +26,7 @@
                 $purpose = $_POST['purpose'];
                 $qry_nw = mysqli_query($con,"SELECT x.* FROM `fin_payment_request_rent_details` x,`fin_payment_request_rent` y WHERE y.`payreq_id`= x.`payreq_id` AND y.`org_id` = '$org_id' AND y.`year`='$yr_nm' AND y.`month`='$mnth_nm' AND y.`type`='$type' AND y.`purpose`='$purpose'AND y.`status`!= '6'");
                 if(mysqli_num_rows($qry_nw) == 0){
-                        $qry = mysqli_query($con,"SELECT x.*,y.*,k.`rate` FROM `rent_entry_details` x,`rent_emi_details` y,`rent_approval` k WHERE  x.`rent_code`=y.`rent_code` AND x.`req_no`=k.`req_no_rt` AND y.`year`='$yr_nm' AND y.`month`='$mnth_nm' AND y.`rent_type`='$type' AND y.`purpose`='$purpose' AND y.`paid_status`= '0' AND x.`is_renew`= '0'");
+                        $qry = mysqli_query($con,"SELECT x.*,y.*,k.`rate` FROM `rent_entry_details` x,`rent_emi_details` y,`rent_approval` k WHERE x.`rent_code`=y.`rent_code` AND x.`req_no`=k.`req_no_rt` AND x.`org_id` = '$org_id' AND y.`year`='$yr_nm' AND y.`month`='$mnth_nm' AND y.`rent_type`='$type' AND y.`purpose`='$purpose' AND y.`paid_status`= '0' AND x.`is_renew`= '0'");
                         $i =1;
                         while ($fetch=mysqli_fetch_object($qry)){
                             $paydate = $fetch->pymnt_dt;
@@ -40,10 +41,13 @@
                             $prohect = mysqli_fetch_object($projectdetails);
                             $subprojectdetails = mysqli_query($con,"SELECT * FROM `prj_subproject` WHERE id = ".$fetch->sp_id);
                             $subprohect = mysqli_fetch_object($subprojectdetails);
+                            $org_query = mysqli_query($con, "SELECT organisation FROM prj_organisation WHERE id='$fetch->org_id'");
+                            $fthOrg = mysqli_fetch_object($org_query);
                         ?>
                     <tr>
                         <td><input type="radio" class="form-check-input" name="selected_row" value="<?php echo $i; ?>"> </td>
                         <td><input type="hidden" class="form-control rnt_code" name="rnt_code[<?php echo $i; ?>]" value="<?php echo $fetch->rent_code; ?>"> <?php echo $fetch->rent_code; ?></td>
+                        <td><?php echo $fthOrg->organisation; ?></td>
                         <td><input type="hidden" class="form-control rnt_pymnt_dt" name="rnt_pymnt_dt[<?php echo $i; ?>]" value="<?php echo $year."-".$month."-".$day; ?>"><?php echo $day."-".$month."-".$year; ?></td>
                         <td><input type="hidden" class="form-control client" name="client[<?php echo $i; ?>]" value="<?php echo $fetch->owner_id; ?>"><?php echo $ownerdet->companynm; ?></td>
                         <td><input type="hidden" class="form-control p_id" name="p_id[<?php echo $i; ?>]" id="p_id<?php echo $i; ?>" value="<?php echo $fetch->prj_id; ?>"><?php echo $prohect->pname; ?></td>
@@ -57,7 +61,7 @@
                     $items[] = $row['rnt_code'];
                 }
                 $rentcode = "'" .implode("', '",$items). "'";
-                $qry = mysqli_query($con,"SELECT x.*,y.*,k.`rate` FROM `rent_entry_details` x,`rent_emi_details` y,`rent_approval` k WHERE  x.`rent_code`=y.`rent_code` AND x.`req_no`=k.`req_no_rt` AND y.`year`='$yr_nm' AND y.`month`='$mnth_nm' AND y.`rent_type`='$type' AND y.`purpose`='$purpose' AND y.`paid_status`= '0' AND x.`is_renew`= '0' AND x.`rent_code` NOT IN ($rentcode)");
+                $qry = mysqli_query($con,"SELECT x.*,y.*,k.`rate` FROM `rent_entry_details` x,`rent_emi_details` y,`rent_approval` k WHERE  x.`rent_code`=y.`rent_code` AND x.`org_id` = '$org_id' AND x.`req_no`=k.`req_no_rt` AND y.`year`='$yr_nm' AND y.`month`='$mnth_nm' AND y.`rent_type`='$type' AND y.`purpose`='$purpose' AND y.`paid_status`= '0' AND x.`is_renew`= '0' AND x.`rent_code` NOT IN ($rentcode)");
                 $i =1;
                 while ($fetch=mysqli_fetch_object($qry)){
                     $day = $fetch->day;
@@ -69,6 +73,8 @@
                     $prohect = mysqli_fetch_object($projectdetails);
                     $subprojectdetails = mysqli_query($con,"SELECT * FROM `prj_subproject` WHERE id = ".$fetch->sp_id);
                     $subprohect = mysqli_fetch_object($subprojectdetails);
+                    $org_query = mysqli_query($con, "SELECT organisation FROM prj_organisation WHERE id='$fetch->org_id'");
+                    $fthOrg = mysqli_fetch_object($org_query);
                 ?>
             <tr>
                 <td>
@@ -90,6 +96,7 @@
                     <input type="radio" class="form-check-input" id="rnt_chk_bx<?php echo $i; ?>" name="selected_row" value="<?php echo $i; ?>">
                 </td>
                 <td><input type="hidden" class="form-control rnt_code" name="rnt_code[<?php echo $i; ?>]" value="<?php echo $fetch->rent_code; ?>"><?php echo $fetch->rent_code; ?></td>
+                <td><?php echo $fthOrg->organisation; ?></td>
                 <td><input type="hidden" class="form-control rnt_pymnt_dt" name="rnt_pymnt_dt[<?php echo $i; ?>]" value="<?php echo $year."-".$month."-".$day;?>"  ><?php echo $day."-".$month."-".$year; ?></td>
                 <td><input type="hidden" class="form-control client" name="client[<?php echo $i; ?>]" value="<?php echo $fetch->owner_id;?>" ><?php echo $ownerdet->companynm; ?></td>
                 <td><input type="hidden" class="form-control p_id" name="p_id[<?php echo $i; ?>]" value="<?php echo $fetch->prj_id; ?>" ><?php echo $prohect->pname; ?></td>

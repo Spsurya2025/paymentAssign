@@ -12,7 +12,15 @@ if (!isset($_GET['request_num'])) {
 }else{
   $request_no = $_GET['request_num'];
 }
+if(isset($_GET['peid'])){
+   $peid = $_GET['peid'];
+   $splpenty = mysqli_query($con, "SELECT SUM(y.pr_paid_amnt) AS pramt, SUM(y.trns_paid_amnt) AS tramt,SUM(other_charge_amt) AS othamt FROM `fin_payment_entry` x LEFT JOIN  `fin_payment_entry_supplier` y ON x.id = y.payent_id WHERE x.id = '$peid'");
+   $splpentydetail = mysqli_fetch_object($splpenty);
+   $total_paid_amt = $splpentydetail->pramt + $splpentydetail->tramt + $splpentydetail->othamt;
+   $total_paid_amt = number_format($total_paid_amt, 2, '.', '');
+}
 ?>
+
 <!-- End of Scripts -->
 <!-- Supplier Form -->
 <div class="row" style="margin-top: 20px;">
@@ -25,7 +33,9 @@ if (!isset($_GET['request_num'])) {
           <?php
               if(isset($_GET['py_req_id'])){
               $pay_req_id = $_GET['py_req_id'];
+              echo $pay_req_id;
               $splquery = "SELECT y.id as spl_id, y.supplier_name, z.pname, z.id AS prj_id, x.*, x.id AS spleqid FROM `fin_payment_request_supplier` x, `prj_supplier` y, `prj_project` z WHERE x.payreq_id='$pay_req_id' AND x.`prjctnm`=z.`id` AND x.splrnm=y.id";
+              echo $splquery;
               $spldetail = mysqli_query($con, $splquery);
               $fthsplr = mysqli_fetch_object($spldetail);
                 echo "<option value='".$fthsplr->spl_id."'>".$fthsplr->supplier_name."</option>";
@@ -148,18 +158,19 @@ if (!isset($_GET['request_num'])) {
                 $singleinprocessamount = mysqli_query($con, "SELECT SUM(reqamt) AS sum_singpay FROM fin_payment_request_supplier_pr WHERE po_num ='$fthsplr->po_num' AND sreqnum ='$fthprs->sreqnum' AND `status`='1'");
                 $singleprocessamt = mysqli_fetch_object($singleinprocessamount);
              ?>
-              <!-- <td><?= $row['name']; ?><input type="hidden" name="name[<?= $row['id']; ?>]" value="<?= $row['name']; ?>"></td> -->
+              <td><?= $row['name']; ?><input type="hidden" name="name[<?= $row['id']; ?>]" value="<?= $row['name']; ?>"></td>
               <tr>
                 <td>
                  <?php 
-                  if(!isset($_GET['peid'])){
-                    if($fthprs->sreqnum == $request_no){?>
+                  if(!isset($_GET['peid'])){ 
+                    if($fthprs->reqamt !=0){
+                    ?>
                       <input type="checkbox" name="pr_data[]" value="<?php echo $fthprs->id;?>" id="pr_data_id">
-                    <?php }}?>
+                    <?php } }?>
                 </td>
                 <td>
-                  <select class="form-control" readonly>
-                    <option><?php echo $fthprs->sreqnum; ?></option>
+                  <select class="form-control" name="req_num_sup[<?=$fthprs->id;?>]" readonly>
+                    <option value="<?php echo $fthprs->sreqnum; ?>"><?php echo $fthprs->sreqnum; ?></option>
                   </select>
                 </td>
                 <td><input type="text" class="form-control" name="pr_numbr[<?=$fthprs->id;?>]" id="pr_numbr" value="<?php echo $fthprs->prnum; ?>" readonly></td>
@@ -224,12 +235,14 @@ if (!isset($_GET['request_num'])) {
               <?php $a++;
               } ?>
             </tbody>
-            <tbody>
+            <?php if(!isset($_GET['peid'])){ ?>
+              <tbody>
                 <tr>
                     <th colspan="3">Total PR Amount: </th>
                     <th><input type="text" class="form-control" id="total_re_amount" readonly></th>
                 </tr>
               </tbody>
+            <?php } ?>
             
           </table>
         </div>
@@ -261,12 +274,14 @@ if (!isset($_GET['request_num'])) {
             <tbody>
                 <tr>
                   <td>
-                    <?php if($fchtr->streqnum == $request_no){?>
-                    <input type="checkbox" name="tr_data[]"  id="tr_data_id" value="<?php echo $fchtr->id;?>">
-                    <?php } ?>
+                  <?php if(!isset($_GET['peid'])){ 
+                    if($fchtr->trans_req !=0){
+                    ?>
+                     <input type="checkbox" name="tr_data[]"  id="tr_data_id" value="<?php echo $fchtr->id;?>">
+                    <?php } }?>
                   </td>
                   <td><?php echo $q; ?></td>
-                  <td><input type="text" class="form-control" value="<?php echo $fchtr->streqnum; ?>" readonly></td>
+                  <td><input type="text" class="form-control" name="req_num_sup_tr[<?=$fchtr->id;?>]" value="<?php echo $fchtr->streqnum; ?>" readonly></td>
                   <td>
                     <input type="text" class="form-control" value="<?php echo $fchtr->subtypenm; ?>" readonly>
                     <input type="hidden" class="form-control" name="trnsrsn[<?=$fchtr->id;?>]" value="<?php echo $fchtr->subtype_id; ?>" readonly>
@@ -294,61 +309,133 @@ if (!isset($_GET['request_num'])) {
             </tbody>
             <?php $q++;
               } ?>
-              
+              <?php if(!isset($_GET['peid'])){ ?>
               <tbody>
                 <tr>
                     <th colspan="3">Total Transportation Amount: </th>
                     <th><input type="text" class="form-control" id="total_tr_amount" value="0.00" readonly> </th>
-                    <th>Total Requested amount</th>
-                    <th>
-                      <input class="form-control" type="text" id="all_total" value="0.00" readonly>
-                      <span id="amt-error" class="error-message"></span>
-                    </th>
                 </tr>
               </tbody>
+              <?php } ?>
+          </table>
+          <table class="table table-bordered table-responsive">
+            <thead>
+              <th>Other Charges Reason</th>
+              <th>Other Charges Amount</th>
+              <th>Total Requested amount:</th>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <select class="form-control select2" name="other_reason" id="othres">
+                    <option value="">---Select---</option>
+                    <?php 
+                      $queryoth = mysqli_query($con, "SELECT id,subtypenm FROM fin_grouping_subtype WHERE lnkwith LIKE 'Indivisual'");
+                      while($other = mysqli_fetch_object($queryoth))
+                      {
+                        echo "<option value='$other->id'>".$other->subtypenm."</option>"; 
+                      }
+                    ?>
+                  </select>
+                </td>
+                <td>        
+                  <input type="text" class="form-control" name="other_amt" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\\..*)\\./g, '$1')" id="oth_amount">
+                </td>
+                <td>
+                  <?php if(isset($_GET['peid'])){ ?>
+                    <input class="form-control" type="text" id="all_total_auto" value="<?php echo $total_paid_amt;?>" readonly>
+                  <?php } else {?>
+                    <input class="form-control" type="text" id="all_total" value="0.00" readonly>
+                    <?php } ?>
+
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
     </div>  
 </div>
+<?php if(!isset($_GET['peid'])) { ?>
+  <script>
+      $(document).ready(function () {
+        $('#oth_amount').prop('disabled', true).val('');
+        $('#othres').on('change', function () {
+          if ($(this).val() === '') {
+            $('#oth_amount').prop('disabled', true).val('');
+            updateGrandTotal();
+          }else{
+            $('#oth_amount').prop('disabled', false);
+          }
+        });
+          function updateTotalReqAmt() {
+              let total = 0;
+              $('input[name="pr_data[]"]:checked').each(function () {
+                  const reqAmtField = $(this).closest('tr').find('input[name="reqamt_p"]');
+                  if (reqAmtField.length) {
+                      total += parseFloat(reqAmtField.val()) || 0;
+                  }
+              });
+              $('#total_re_amount').val(total.toFixed(2));
+              updateGrandTotal(); 
+          }
+
+          // Function to calculate total for Transportation Amount
+          function updateTotalTrAmt() {
+              let total_tr = 0;
+              $('input[name="tr_data[]"]:checked').each(function () {
+                  const reqAmtField_tr = $(this).closest('tr').find('input[name="trreqamt_d"]');
+                  if (reqAmtField_tr.length) {
+                      total_tr += parseFloat(reqAmtField_tr.val()) || 0;
+                  }
+              });
+              $('#total_tr_amount').val(total_tr.toFixed(2));
+              updateGrandTotal();
+          }
+
+          // Function to update the grand total
+          function updateGrandTotal() {
+              const totalReqAmt = parseFloat($('#total_re_amount').val()) || 0;
+              const totalTrAmt = parseFloat($('#total_tr_amount').val()) || 0;
+              var othres_data = $('#othres').val();
+              if(othres_data == ''){
+                var oth_amt = 0.00;
+              }else{
+                var oth_amt = parseFloat($("#oth_amount").val()) || 0.00;
+              }
+              
+              const grandTotal = totalReqAmt + totalTrAmt + oth_amt;
+              
+              $('#all_total').val(grandTotal.toFixed(2));
+          }
+          // Ensure 'Other Charges' amount can only be entered if 'Other Reason' is selected
+          $('#oth_amount').on('input', function () {
+            if ($('#othres').val() === '') {
+                alert("Please select 'Other Reason' before entering the amount.");
+                $(this).val('');
+                updateGrandTotal();
+                return false;
+            }
+            updateGrandTotal();
+          });
+          $('input[name="pr_data[]"]').on('change', updateTotalReqAmt);
+          $('input[name="tr_data[]"]').on('change', updateTotalTrAmt);
+          
+          });
+  </script>
+  
+<?php } else { ?>
+<script>
+  $(document).ready(function () { 
+    $('#othres').prop('disabled', true);
+    $('#oth_amount').prop('disabled', true).val('');
+  })
+</script>
+<?php } ?>
 <script>
     $(document).ready(function () {
-        function updateTotalReqAmt() {
-            let total = 0;
-            $('input[name="pr_data[]"]:checked').each(function () {
-                const reqAmtField = $(this).closest('tr').find('input[name="reqamt_p"]');
-                if (reqAmtField.length) {
-                    total += parseFloat(reqAmtField.val()) || 0;
-                }
-            });
-            $('#total_re_amount').val(total.toFixed(2));
-            updateGrandTotal(); 
-        }
-
-        // Function to calculate total for Transportation Amount
-        function updateTotalTrAmt() {
-            let total_tr = 0;
-            $('input[name="tr_data[]"]:checked').each(function () {
-                const reqAmtField_tr = $(this).closest('tr').find('input[name="trreqamt_d"]');
-                if (reqAmtField_tr.length) {
-                    total_tr += parseFloat(reqAmtField_tr.val()) || 0;
-                }
-            });
-            $('#total_tr_amount').val(total_tr.toFixed(2));
-            updateGrandTotal();
-        }
-
-        // Function to update the grand total
-        function updateGrandTotal() {
-            const totalReqAmt = parseFloat($('#total_re_amount').val()) || 0;
-            const totalTrAmt = parseFloat($('#total_tr_amount').val()) || 0;
-            const grandTotal = totalReqAmt + totalTrAmt;
-
-            $('#all_total').val(grandTotal.toFixed(2));
-        }
-        $('input[name="pr_data[]"]').on('change', updateTotalReqAmt);
-        $('input[name="tr_data[]"]').on('change', updateTotalTrAmt);
+      $('#othres').select2();
     });
-</script>
-
+    
+  </script>
 <!-- End of Supplier Form -->

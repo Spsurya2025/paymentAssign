@@ -23,6 +23,12 @@ if(isset($_POST['payasgn']))
          $remark = mysqli_real_escape_string($con, $_POST['remark']);
          $updateCollectionentry = mysqli_query($con, "UPDATE fin_payment_entry_collection SET prj_name='$prj_name',sprj_name='$sbprjctnm',remarks='$remark' WHERE payent_id='$peid'");
       }
+      else if($trnscto == "Asset Finance")
+      {
+         $prj_name = mysqli_real_escape_string($con, $_POST['prj_name']);
+         $sbprjctnm = mysqli_real_escape_string($con, $_POST['sbprjctnm']);
+         $updatefiquery = mysqli_query($con, "UPDATE `fin_payment_entry_asset_fin` SET prj_id ='$prj_name',sprj_id = '$sbprjctnm' WHERE payent_id='$peid'");
+      }
       $updbankim = mysqli_query($con,"UPDATE fin_banking_imports SET is_pay_asgnd='1',is_pay_aprvd='1' WHERE id='$bnkimprt_id'");
       echo "<script>alert('Successfully updated')</script>";
       echo "<script>window.location.href='../bankassign/mngpayoverview.php?accid=$acc_id';</script>";
@@ -50,6 +56,10 @@ elseif(isset($_POST['payrej']))
 }
 ?>
 <title><?php if(isset($_GET['bimpid']) && isset($_GET['peid'])) { echo "Auto Payment Assignment"; } else if (isset($_GET['bimpid'])) { echo "Manual payment Assignment"; } ?> : Suryam Group</title>
+<?php
+$sql1 = mysqli_query($con, "SELECT trnscto FROM fin_payment_entry WHERE bnkimprt_id='$bnkimprt_id' AND id='$peid'");
+$row = mysqli_fetch_object($sql1);
+?>
 <div id="page-wrapper" style="margin-left: 0;">
    <div class="row" style="margin-top: -35px;">
       <div class="col-lg-12">
@@ -61,7 +71,7 @@ elseif(isset($_POST['payrej']))
    <div class="row" style="margin: 10px;">
       <!-- Body Starts Here -->
       <?php if(isset($message)) { echo "<i style=color:#33D15B;>".$message."</i>"; } ?>
-      <form name="form" method="post" class="forms-sample" style="margin-left: 5px;">
+      <form name="form" method="post" class="forms-sample" style="margin-left: 5px;" onsubmit="return validForm()">
          <legend>
             <h5 style="color: #008787;">Uploaded Payment Details</h5>
          </legend>
@@ -70,9 +80,14 @@ elseif(isset($_POST['payrej']))
                $bimpid = $_GET['bimpid'];
                $dtlsqr = mysqli_query($con, "SELECT x.*,y.* FROM `fin_banking_imports` x, `fin_statement_preview` y  WHERE x.`preview_id`=y.`id` AND x.`id`='$bimpid' AND y.`status`='1'");
                $fthimps = mysqli_fetch_object($dtlsqr);
-               $query = "SELECT request_for,pay_request_id,pr_num,organisation_id,payreq_amt FROM fin_all_pay_request WHERE FIND_IN_SET('$fthimps->pr_num', REPLACE(pr_num, '#', ','))";
+               if($row->trnscto == 'Supplier'){
+                  $query = "SELECT request_for,pay_request_id,pr_num,organisation_id,payreq_amt FROM fin_all_pay_request WHERE pr_num = '$fthimps->pr_num'";
+               }else{
+                  $query = "SELECT request_for,pay_request_id,pr_num,organisation_id,payreq_amt FROM fin_all_pay_request WHERE FIND_IN_SET('$fthimps->pr_num', REPLACE(pr_num, '#', ','))";
+               }
                $result = mysqli_query($con, $query);
                $row1 = mysqli_fetch_object($result);
+               echo isset($row1->request_for) ? $row1->request_for : 'null';
             }
             ?>
          <fieldset>
@@ -136,8 +151,7 @@ elseif(isset($_POST['payrej']))
                      <label for="trnscto">Transaction To/Type</label>
                      <select class="form-control" name="trnscto" id="trnscto" readonly>
                         <?php
-                            $sql1 = mysqli_query($con, "SELECT trnscto FROM fin_payment_entry WHERE bnkimprt_id='$bnkimprt_id' AND id='$peid'");
-                            $row = mysqli_fetch_object($sql1);
+                            
                            if (isset($_GET['bimpid']) && isset($_GET['peid'])) {
                              echo "<option value='".$row->trnscto."'>".$row->trnscto."</option>";
                            }
@@ -188,7 +202,7 @@ elseif(isset($_POST['payrej']))
                <div class="col-lg-12">
                   <div class="form-group">
                    <?php if($fthimps->is_pay_aprvd == '0') { ?>
-                     <?php if($row->trnscto == 'Supplier' || $row->trnscto == 'Vendor' || $row->trnscto == 'Others' || $row->trnscto == 'Collection' || $row->trnscto == 'Rent' || $row->trnscto == 'Transporter' || $row->trnscto == 'Withdraw' || $row->trnscto == 'GST' || $row->trnscto == 'Operator' || $row->trnscto == 'Salary Processing' || $row->trnscto == 'Expense') { ?>
+                     <?php if($row->trnscto == 'Supplier' || $row->trnscto == 'Vendor' || $row->trnscto == 'Others' || $row->trnscto == 'Collection' || $row->trnscto == 'Rent' || $row->trnscto == 'Transporter' || $row->trnscto == 'Withdraw' || $row->trnscto == 'GST' || $row->trnscto == 'Operator' || $row->trnscto == 'Salary Processing' || $row->trnscto == 'Expense' || $row->trnscto == 'Asset Finance') { ?>
                      <div style="margin-top: 15px; margin-bottom: 30px; float: right;">
                         <input type="submit" name="payasgn" id="payasgn" value="ASSIGN" class="btn btn-success mr-2" onclick="return confirm('Are you sure you want to assign?')">
                         <input type="submit" name="payrej" id="payrej" value="Reject" class="btn btn-danger mr-2" onclick="return confirm('Are you sure you want to reject?')">
@@ -212,170 +226,245 @@ elseif(isset($_POST['payrej']))
       var request_num = $("#preqnum").val();
       var pay_req_id = <?php echo isset($row1->pay_request_id) ? $row1->pay_request_id : 'null'; ?>;
       var peid = <?php echo $peid;?>;
-      if((trnsto == "Supplier")){
-      $.ajax({
-         url: "supplier_pay_assign/supplier_payasgn.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Supplier"){
+         $.ajax({
+            url: "supplier_pay_assign/supplier_payasgn.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       } 
-      if((trnsto == "Vendor")){
-      $.ajax({
-         url: "Vendor_pay_assign/vendor_payasign.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Vendor"){
+         $.ajax({
+            url: "Vendor_pay_assign/vendor_payasign.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }  
-      if((trnsto == "Operator")){
-      $.ajax({
-         url: "operator_pay_assign/operator_payasgn.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Operator"){
+         $.ajax({
+            url: "operator_pay_assign/operator_payasgn.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }  
-      if((trnsto == "Transporter")){
-      $.ajax({
-         url: "transporter_pay_assign/transport_pay_assign.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Transporter"){
+         $.ajax({
+            url: "transporter_pay_assign/transport_pay_assign.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }    
-      if((trnsto == "Salary Processing")){
-      $.ajax({
-         url: "salary_pay_assign/salary_payassign.php",
-         data:{
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Salary Processing"){
+         $.ajax({
+            url: "salary_pay_assign/salary_payassign.php",
+            data:{
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }
-      if((trnsto == "Expense")){
-      $.ajax({
-         url: "exp_pay_assign/exp_payassign.php",
-         data:{
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Expense"){
+         $.ajax({
+            url: "exp_pay_assign/exp_payassign.php",
+            data:{
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }
-      if((trnsto == "Others")){
-      $.ajax({
-         url: "other_pay_assign/others_payasn.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Others"){
+         $.ajax({
+            url: "other_pay_assign/auto_others.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }
-      if((trnsto == "Rent")){
-      $.ajax({
-         url: "rent_pay_assign/rent_payassign.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Rent"){
+         $.ajax({
+            url: "rent_pay_assign/rent_payassign.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }
-      if((trnsto == "Collection")){
-      $.ajax({
-         url: "colctn_pay_assign/col_payassign.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Collection"){
+         $.ajax({
+            url: "colctn_pay_assign/col_payassign.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }
-      if((trnsto == "GST")){
-      $.ajax({
-         url: "gst_pay_assign/gst_payassign.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "GST"){
+         $.ajax({
+            url: "gst_pay_assign/gst_payassign.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
       }
-      if((trnsto == "Withdraw")){
-      $.ajax({
-         url: "withdw_pay_assign/withdrw_payassign.php",
-         data:{
-            py_req_id: pay_req_id,
-            request_num:request_num,
-            peid:peid
-         },
-         type: 'GET',
-         success: function(response) {
-            var resp = $.trim(response);
-            $("#showPay").html(resp); 
-         }
-      });  
+      if(trnsto == "Withdraw"){
+         $.ajax({
+            url: "withdw_pay_assign/withdrw_payassign.php",
+            data:{
+               py_req_id: pay_req_id,
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
+      }
+      if(trnsto == "Cheque"){
+         $.ajax({
+            url: "cheque_pay_assign/che_payassign.php",
+            data:{
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         });  
+      }
+      if(trnsto == "Asset Finance")
+      {
+         $.ajax({
+            url: "asset_finance/pay_assign.php",
+            data:{
+               request_num:request_num,
+               peid:peid
+            },
+            type: 'GET',
+            success: function(response) {
+               var resp = $.trim(response);
+               $("#showPay").html(resp); 
+            }
+         }); 
       }
    });               
+</script>
+<script>
+  function validForm() {
+   var trnscto = document.getElementById('trnscto').value.trim();
+   if (trnscto === "Collection") 
+   {
+      const coll_fields = [
+      { id: 'prjctnm', name: 'Project name'},
+      { id: 'sbprjctnm', name: 'Sub project name'},
+      { id: 'remark', name: 'Remarks'}
+      ];
+      for (let coll_field of coll_fields) {
+         let coll_value = document.getElementById(coll_field.id).value.trim();
+         if (!coll_value) {
+            alert(`${coll_field.name} field is required!`);
+            $("#"+coll_field.id).siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+            $("#"+coll_field.id).siblings(".select2-container").find(".select2-selection").focus();
+            return false;
+         }
+         else {
+            $("#"+coll_field.id).siblings(".select2-container").find(".select2-selection").css("border", "");
+         }
+      }
+   }
+   if (trnscto === "Asset Finance") 
+   {
+      const asset_fields = [
+      { id: 'prjctnm', name: 'Project name'},
+      { id: 'sbprjctnm', name: 'Sub project name'}
+      ];
+      for (let asset_field of asset_fields) {
+         let asset_value = document.getElementById(asset_field.id).value.trim();
+         if (!asset_value) {
+            alert(`${asset_field.name} field is required!`);
+            $("#"+asset_field.id).siblings(".select2-container").find(".select2-selection").css("border", "1px solid #ec1313"); // Apply border to Select2 container
+            $("#"+asset_field.id).siblings(".select2-container").find(".select2-selection").focus();
+            return false;
+         }
+         else {
+            $("#"+asset_field.id).siblings(".select2-container").find(".select2-selection").css("border", "");
+         }
+      }
+   }
+   return true;
+  }
+
 </script>
 <script src="../js/metisMenu.min.js"></script>
 <!-- Custom Theme JavaScript -->

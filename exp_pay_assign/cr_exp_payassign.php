@@ -95,7 +95,7 @@
         <select class="form-control" name="prjct" id="prjct">
           <option value="">--- Project Name ---</option>
           <?php
-            $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' ORDER BY `pname` ASC");
+            $prjqr = mysqli_query($con, "SELECT id,pname FROM `prj_project` WHERE `status`='1' AND (ptype_org='$_GET[org_id]' OR ptype='Corporate') ORDER BY `pname` ASC");
             while ($fthprj = mysqli_fetch_object($prjqr)) {
               echo "<option value='".$fthprj->id."'>".$fthprj->pname."</option>";
             }
